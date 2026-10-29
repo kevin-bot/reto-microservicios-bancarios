@@ -33,12 +33,12 @@ implementar.
 
 **Purpose**: Inicializar el proyecto Maven y la infraestructura local.
 
-- [ ] T001 Generar el proyecto Spring Boot **3.5.x** en `ms-clientes/` (groupId `com.banco`, artifactId `ms-clientes`, paquete `com.banco.clientes`, Java 21, packaging jar) con Maven Wrapper (`mvnw`, `mvnw.cmd`, `.mvn/`) y la clase `M/MsClientesApplication.java`
-- [ ] T002 Configurar dependencias en `ms-clientes/pom.xml`:
+- [X] T001 Generar el proyecto Spring Boot **3.5.x** en `ms-clientes/` (groupId `com.banco`, artifactId `ms-clientes`, paquete `com.banco.clientes`, Java 21, packaging jar) con Maven Wrapper (`mvnw`, `mvnw.cmd`, `.mvn/`) y la clase `M/MsClientesApplication.java`
+- [X] T002 Configurar dependencias en `ms-clientes/pom.xml`:
   - **main**: `spring-boot-starter-web`, `-data-jpa`, `-validation`, `-amqp`, `-actuator`; `flyway-core`, `flyway-database-postgresql`, `postgresql` (runtime); `spring-security-crypto`; `mapstruct` 1.6.x; `lombok`; `springdoc-openapi-starter-webmvc-ui` 2.8.x.
   - **test**: `spring-boot-starter-test`, `spring-boot-testcontainers`, `org.testcontainers:postgresql`, `org.testcontainers:rabbitmq`, `org.testcontainers:junit-jupiter`, `io.karatelabs:karate-junit5` 1.5.x.
   - **annotationProcessorPaths** de `maven-compiler-plugin` en este orden: `lombok`, `lombok-mapstruct-binding`, `mapstruct-processor`.
-- [ ] T003 Crear `R/application.yml`:
+- [X] T003 Crear `R/application.yml`:
   - **Servidor**: `server.port=8081`, `server.servlet.context-path=/api`.
   - **Datasource** por variables de entorno con defaults locales (`DB_URL=jdbc:postgresql://localhost:5432/clientes_db`, `DB_USER=clientes_user`, `DB_PASSWORD=clientes_pass`).
   - **JPA**: `spring.jpa.hibernate.ddl-auto=validate`, `spring.jpa.open-in-view=false`, Flyway habilitado.
@@ -46,9 +46,9 @@ implementar.
   - **Errores y JSON**: `spring.mvc.problemdetails.enabled=true`, `spring.jackson.deserialization.fail-on-unknown-properties=true`.
   - **Paginación**: `spring.data.web.pageable.max-page-size=100`.
   - **Otros**: exponer `health` en Actuator; `springdoc.swagger-ui.path=/swagger-ui.html`.
-- [ ] T004 [P] Crear `.gitignore` en la raíz (`target/`, `.idea/`, `*.iml`, `.vscode/`, `*.log`, `.DS_Store`)
-- [ ] T005 [P] Crear `docker/postgres/init/01-crear-bases.sql`, que crea los usuarios `clientes_user` y `cuentas_user` y las bases `clientes_db` (dueño `clientes_user`) y `cuentas_db` (dueño `cuentas_user`)
-- [ ] T006 [P] Crear `docker-compose.yml` en la raíz con:
+- [X] T004 [P] Crear `.gitignore` en la raíz (`target/`, `.idea/`, `*.iml`, `.vscode/`, `*.log`, `.DS_Store`)
+- [X] T005 [P] Crear `docker/postgres/init/01-crear-bases.sql`, que crea los usuarios `clientes_user` y `cuentas_user` y las bases `clientes_db` (dueño `clientes_user`) y `cuentas_db` (dueño `cuentas_user`)
+- [X] T006 [P] Crear `docker-compose.yml` en la raíz con:
   - `postgres` (`postgres:16-alpine`, puerto 5432, volumen con `docker/postgres/init`, healthcheck `pg_isready`).
   - `rabbitmq` (`rabbitmq:3.13-management`, puertos 5672 y 15672, healthcheck `rabbitmq-diagnostics -q ping`).
 
@@ -64,23 +64,23 @@ implementar.
 
 ### Excepciones y tipos base
 
-- [ ] T007 [P] Crear `M/shared/exception/ReglaNegocioException.java` (abstracta, extiende `RuntimeException`) y `M/shared/exception/DomainValidationException.java` (extiende `ReglaNegocioException`)
-- [ ] T008 [P] Crear las excepciones del cliente:
+- [X] T007 [P] Crear `M/shared/exception/ReglaNegocioException.java` (abstracta, extiende `RuntimeException`) y `M/shared/exception/DomainValidationException.java` (extiende `ReglaNegocioException`)
+- [X] T008 [P] Crear las excepciones del cliente:
   - `M/cliente/exception/ClienteNoEncontradoException.java` (recibe `UUID clienteId`; mensaje "No existe un cliente con id {clienteId}").
   - `M/cliente/exception/IdentificacionDuplicadaException.java` (mensaje "Ya existe un cliente con identificación {identificacion}").
   - `M/cliente/exception/ClienteEliminadoException.java` (extiende `ReglaNegocioException`).
-- [ ] T009 [P] Crear el enum `M/cliente/entity/Genero.java` con `MASCULINO`, `FEMENINO`, `OTRO`
+- [X] T009 [P] Crear el enum `M/cliente/entity/Genero.java` con `MASCULINO`, `FEMENINO`, `OTRO`
 
 ### Esquema
 
-- [ ] T010 Crear `R/db/migration/V1__crear_tablas_persona_cliente.sql` según data-model.md:
+- [X] T010 Crear `R/db/migration/V1__crear_tablas_persona_cliente.sql` según data-model.md:
   - **persona**: `id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`, `nombre VARCHAR(100) NOT NULL`, `genero VARCHAR(10) NOT NULL`, `edad INTEGER NOT NULL CONSTRAINT ck_persona_edad CHECK (edad BETWEEN 18 AND 120)`, `identificacion VARCHAR(20) NOT NULL CONSTRAINT uk_persona_identificacion UNIQUE`, `direccion VARCHAR(200) NOT NULL`, `telefono VARCHAR(15) NOT NULL`.
   - **cliente**: `persona_id BIGINT PRIMARY KEY REFERENCES persona(id)`, `cliente_id UUID NOT NULL CONSTRAINT uk_cliente_cliente_id UNIQUE`, `contrasena VARCHAR(100) NOT NULL`, `estado BOOLEAN NOT NULL DEFAULT TRUE`, `eliminado BOOLEAN NOT NULL DEFAULT FALSE`, `fecha_creacion TIMESTAMPTZ NOT NULL`, `fecha_actualizacion TIMESTAMPTZ NOT NULL`.
   - **Índice**: `idx_cliente_eliminado_estado (eliminado, estado)`.
 
 ### Entidad de dominio (TDD — F5)
 
-- [ ] T011 **(TDD: escribir primero y verificar que falla)** Crear `T/cliente/entity/ClienteTest.java`. Es una prueba unitaria pura, sin Spring, con AssertJ, Given/When/Then, `@DisplayName` en español y nombres `metodo_cuandoCondicion_debeResultado`. Debe cubrir:
+- [X] T011 **(TDD: escribir primero y verificar que falla)** Crear `T/cliente/entity/ClienteTest.java`. Es una prueba unitaria pura, sin Spring, con AssertJ, Given/When/Then, `@DisplayName` en español y nombres `metodo_cuandoCondicion_debeResultado`. Debe cubrir:
   - `crear` con datos válidos: genera `clienteId` no nulo, `estado` por defecto `true` y `eliminado=false`.
   - `crear` con datos inválidos lanza `DomainValidationException` en cada uno de estos casos:
     - edad 17 o 121 (regla "18–120");
@@ -95,12 +95,12 @@ implementar.
   - `activar`, `desactivar` o `eliminar` sobre un cliente eliminado lanza `ClienteEliminadoException`.
   - `cambiarContrasena` reemplaza el hash; un hash vacío lanza excepción.
   - `actualizarDatosPersonales` y `actualizarContacto` aplican sus cambios y validan las mismas reglas.
-- [ ] T012 Crear la entidad abstracta `M/cliente/entity/Persona.java`:
+- [X] T012 Crear la entidad abstracta `M/cliente/entity/Persona.java`:
   - `@Entity`, `@Table(name="persona")`, `@Inheritance(strategy = JOINED)`.
   - Campos según data-model.md; `genero` con `@Enumerated(STRING)`.
   - Lombok: solo `@Getter` y `@NoArgsConstructor(access = PROTECTED)`. **Prohibidos `@Data`, `@Setter` y `@EqualsAndHashCode`**.
   - Métodos `actualizarDatosPersonales(nombre, genero, edad, identificacion)` y `actualizarContacto(direccion, telefono)` con validación de invariantes.
-- [ ] T013 Crear la entidad `M/cliente/entity/Cliente.java` (extiende `Persona`, `@Table(name="cliente")`, `@PrimaryKeyJoinColumn(name="persona_id")`) hasta que `ClienteTest` pase:
+- [X] T013 Crear la entidad `M/cliente/entity/Cliente.java` (extiende `Persona`, `@Table(name="cliente")`, `@PrimaryKeyJoinColumn(name="persona_id")`) hasta que `ClienteTest` pase:
   - Fábrica estática `crear(...)` que genera `UUID.randomUUID()`.
   - Métodos `activar()`, `desactivar()`, `cambiarContrasena(String hash)`, `eliminar()`, `estaEliminado()`.
   - `@CreationTimestamp` en `fechaCreacion` y `@UpdateTimestamp` en `fechaActualizacion`.
@@ -108,24 +108,24 @@ implementar.
 
 ### Persistencia, seguridad y mensajería
 
-- [ ] T014 Crear `M/cliente/repository/ClienteRepository.java` (`JpaRepository<Cliente, Long>` y `JpaSpecificationExecutor<Cliente>`) con:
+- [X] T014 Crear `M/cliente/repository/ClienteRepository.java` (`JpaRepository<Cliente, Long>` y `JpaSpecificationExecutor<Cliente>`) con:
   - `findByClienteIdAndEliminadoFalse(UUID)`
   - `existsByIdentificacion(String)`
   - `existsByIdentificacionAndClienteIdNot(String, UUID)`
-- [ ] T015 [P] Crear `M/shared/config/PasswordEncoderConfig.java` con un bean `PasswordEncoder` = `new BCryptPasswordEncoder(10)`
-- [ ] T016 [P] Crear `M/shared/config/RabbitConfig.java` con:
+- [X] T015 [P] Crear `M/shared/config/PasswordEncoderConfig.java` con un bean `PasswordEncoder` = `new BCryptPasswordEncoder(10)`
+- [X] T016 [P] Crear `M/shared/config/RabbitConfig.java` con:
   - Bean `TopicExchange` `clientes.exchange` (durable, constante pública `CLIENTES_EXCHANGE`).
   - Bean `Jackson2JsonMessageConverter`.
   - `RabbitTemplate` configurado con ese converter.
-- [ ] T017 [P] Crear los tipos de evento según contracts/eventos-cliente.md:
+- [X] T017 [P] Crear los tipos de evento según contracts/eventos-cliente.md:
   - `M/cliente/event/TipoEventoCliente.java`: enum `CLIENTE_CREADO("cliente.creado")`, `CLIENTE_ACTUALIZADO("cliente.actualizado")`, `CLIENTE_ELIMINADO("cliente.eliminado")`, con su routing key.
   - `M/cliente/event/ClienteEvento.java`: record con `eventId`, `tipo`, `fechaOcurrencia`, `clienteId`, `nombre`, `estado`, y fábrica `desde(Cliente, TipoEventoCliente)`.
   - `M/cliente/event/ClienteEventoDominio.java`: record de evento de aplicación que envuelve un `ClienteEvento`.
-- [ ] T018 **(Test primero)** Crear `T/cliente/event/ClienteEventPublisherTest.java` (Mockito sobre `RabbitTemplate`) que verifique:
+- [X] T018 **(Test primero)** Crear `T/cliente/event/ClienteEventPublisherTest.java` (Mockito sobre `RabbitTemplate`) que verifique:
   - Envía a `clientes.exchange` con la routing key del tipo y el payload `ClienteEvento`.
   - Si `RabbitTemplate` lanza `AmqpException`, no propaga la excepción (solo registra en log).
-- [ ] T019 Crear `M/cliente/event/ClienteEventPublisher.java`, un `@Component` con un método `@TransactionalEventListener(phase = AFTER_COMMIT)` que recibe `ClienteEventoDominio`, llama a `rabbitTemplate.convertAndSend(...)` y ante `AmqpException` hace `log.error` con el `eventId` sin relanzar
-- [ ] T020 Crear `M/shared/exception/GlobalExceptionHandler.java` (`@RestControllerAdvice`, extiende `ResponseEntityExceptionHandler`) que devuelva `ProblemDetail` según research R9:
+- [X] T019 Crear `M/cliente/event/ClienteEventPublisher.java`, un `@Component` con un método `@TransactionalEventListener(phase = AFTER_COMMIT)` que recibe `ClienteEventoDominio`, llama a `rabbitTemplate.convertAndSend(...)` y ante `AmqpException` hace `log.error` con el `eventId` sin relanzar
+- [X] T020 Crear `M/shared/exception/GlobalExceptionHandler.java` (`@RestControllerAdvice`, extiende `ResponseEntityExceptionHandler`) que devuelva `ProblemDetail` según research R9:
 
   | Excepción | HTTP | `title` |
   |---|---|---|
@@ -137,9 +137,9 @@ implementar.
   | `IdentificacionDuplicadaException`, y `DataIntegrityViolationException` **solo** si el nombre de la restricción violada es `uk_persona_identificacion` | 409 | "Identificación duplicada" |
   | `ReglaNegocioException` (p. ej. `ClienteEliminadoException`) | 422 | "Regla de negocio incumplida" |
   | `Exception` y cualquier otra `DataIntegrityViolationException` | 500 | "Error interno", sin detalle (con `log.error`) |
-- [ ] T021 [P] Crear `M/cliente/dto/ClienteResponse.java`, un record con `clienteId`, `nombre`, `genero`, `edad`, `identificacion`, `direccion`, `telefono` y `estado`. **Sin `contrasena`.** También crear `M/cliente/mapper/ClienteMapper.java` (MapStruct, `componentModel = "spring"`) con el método `toResponse(Cliente)`
-- [ ] T022 [P] Crear `M/shared/config/OpenApiConfig.java` con el título "ms-clientes API", la versión 1.0.0 y la descripción
-- [ ] T023 [P] Crear `T/support/TestcontainersConfig.java` (`@TestConfiguration(proxyBeanMethods = false)`) con beans `@ServiceConnection` de `PostgreSQLContainer("postgres:16-alpine")` y `RabbitMQContainer("rabbitmq:3.13-management")`
+- [X] T021 [P] Crear `M/cliente/dto/ClienteResponse.java`, un record con `clienteId`, `nombre`, `genero`, `edad`, `identificacion`, `direccion`, `telefono` y `estado`. **Sin `contrasena`.** También crear `M/cliente/mapper/ClienteMapper.java` (MapStruct, `componentModel = "spring"`) con el método `toResponse(Cliente)`
+- [X] T022 [P] Crear `M/shared/config/OpenApiConfig.java` con el título "ms-clientes API", la versión 1.0.0 y la descripción
+- [X] T023 [P] Crear `T/support/TestcontainersConfig.java` (`@TestConfiguration(proxyBeanMethods = false)`) con beans `@ServiceConnection` de `PostgreSQLContainer("postgres:16-alpine")` y `RabbitMQContainer("rabbitmq:3.13-management")`
 
 **Checkpoint**: `./mvnw test` pasa `ClienteTest` y `ClienteEventPublisherTest`, y la aplicación arranca contra el compose (Flyway valida el esquema).
 
