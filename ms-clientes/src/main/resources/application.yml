@@ -7,7 +7,7 @@ spring:
   application:
     name: ms-clientes
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/clientes_db}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/clientes_db}
     username: ${DB_USER:clientes_user}
     password: ${DB_PASSWORD:clientes_pass}
   jpa:

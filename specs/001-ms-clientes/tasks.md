@@ -40,7 +40,7 @@ implementar.
   - **annotationProcessorPaths** de `maven-compiler-plugin` en este orden: `lombok`, `lombok-mapstruct-binding`, `mapstruct-processor`.
 - [X] T003 Crear `R/application.yml`:
   - **Servidor**: `server.port=8081`, `server.servlet.context-path=/api`.
-  - **Datasource** por variables de entorno con defaults locales (`DB_URL=jdbc:postgresql://localhost:5432/clientes_db`, `DB_USER=clientes_user`, `DB_PASSWORD=clientes_pass`).
+  - **Datasource** por variables de entorno con defaults locales (`DB_URL=jdbc:postgresql://localhost:5433/clientes_db`, `DB_USER=clientes_user`, `DB_PASSWORD=clientes_pass`).
   - **JPA**: `spring.jpa.hibernate.ddl-auto=validate`, `spring.jpa.open-in-view=false`, Flyway habilitado.
   - **RabbitMQ** por variables de entorno (`RABBIT_HOST=localhost`, `RABBIT_PORT=5672`, `RABBIT_USER=guest`, `RABBIT_PASSWORD=guest`).
   - **Errores y JSON**: `spring.mvc.problemdetails.enabled=true`, `spring.jackson.deserialization.fail-on-unknown-properties=true`.
