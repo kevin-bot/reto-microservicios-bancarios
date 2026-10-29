@@ -146,7 +146,7 @@ notificó la eliminación.
   confirmada; ambas generan su notificación.
 - Género fuera de los valores permitidos → se rechaza como dato inválido.
 - Teléfono con caracteres no numéricos o longitud fuera de 7–15 dígitos → se rechaza.
-- Contraseña vacía o menor a 4 caracteres → se rechaza.
+- Contraseña vacía, menor a 4 o mayor a 72 caracteres → se rechaza.
 - Actualización parcial sin ningún campo → se rechaza como dato inválido.
 - Cuerpo de la solicitud mal formado → se rechaza indicando que la solicitud no es legible.
 - El servicio de mensajería no está disponible al registrar/actualizar/eliminar → la operación
@@ -170,8 +170,8 @@ notificó la eliminación.
 - **FR-004**: La identificación (documento de identidad) MUST ser única entre todos los clientes.
 - **FR-005**: Los valores de género permitidos MUST ser: MASCULINO, FEMENINO, OTRO.
 - **FR-006**: La edad MUST estar entre 18 y 120; la identificación MUST ser alfanumérica de 5 a 20
-  caracteres; el teléfono MUST contener solo dígitos (7–15); la contraseña MUST tener al menos 4
-  caracteres.
+  caracteres; el teléfono MUST contener solo dígitos (7–15); la contraseña MUST tener entre 4 y
+  72 caracteres.
 
 **Seguridad**
 

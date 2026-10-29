@@ -108,7 +108,7 @@ ms-clientes/
     │   │   ├── cliente/
     │   │   │   ├── controller/   ClienteController
     │   │   │   ├── service/      ClienteService, ClienteServiceImpl
-    │   │   │   ├── repository/   ClienteRepository
+    │   │   │   ├── repository/   ClienteRepository, ClienteSpecifications
     │   │   │   ├── entity/       Persona, Cliente, Genero
     │   │   │   ├── dto/          ClienteCreateRequest, ClienteUpdateRequest,
     │   │   │   │                 ClientePatchRequest, ClienteResponse
@@ -133,6 +133,7 @@ ms-clientes/
         │   ├── cliente/event/ClienteEventPublisherTest.java    # unitaria Mockito
         │   ├── cliente/controller/ClienteControllerTest.java   # @WebMvcTest
         │   ├── cliente/ClienteIntegrationTest.java             # @SpringBootTest + Testcontainers (F6)
+        │   ├── shared/validation/AlMenosUnCampoValidatorTest.java  # unitaria
         │   ├── karate/ClientesKarateTest.java                  # runner Karate
         │   └── support/TestcontainersConfig.java               # contenedores compartidos
         └── resources/karate/clientes/clientes.feature

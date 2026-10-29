@@ -109,6 +109,7 @@ components:
       enum: [MASCULINO, FEMENINO, OTRO]
     ClienteCreateRequest:
       type: object
+      additionalProperties: false
       required: [nombre, genero, edad, identificacion, direccion, telefono, contrasena]
       properties:
         nombre: { type: string, minLength: 1, maxLength: 100, example: Jose Lema }
@@ -135,6 +136,7 @@ components:
     ClientePatchRequest:
       type: object
       description: Al menos un campo debe estar presente y no nulo.
+      additionalProperties: false
       minProperties: 1
       properties:
         nombre: { type: string, minLength: 1, maxLength: 100 }

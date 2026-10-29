@@ -111,10 +111,12 @@ decisiones de diseño concretas que la constitución deja abiertas.
   |---|---|---|
   | `MethodArgumentNotValidException` / `HandlerMethodValidationException` | 400 | Datos inválidos (con propiedad `errores` por campo) |
   | `HttpMessageNotReadableException` | 400 | Solicitud mal formada |
+  | `DomainValidationException` (dato inválido detectado por la entidad) | 400 | Datos inválidos |
+  | `MethodArgumentTypeMismatchException`, `PropertyReferenceException` (UUID o `sort` inválidos) | 400 | Parámetro inválido |
   | `ClienteNoEncontradoException` | 404 | Cliente no encontrado |
-  | `IdentificacionDuplicadaException` | 409 | Identificación duplicada |
-  | `ReglaNegocioException` (base) / `DomainValidationException` | 422 | Regla de negocio incumplida |
-  | `Exception` | 500 | Error interno (sin detalle; se registra en log) |
+  | `IdentificacionDuplicadaException`; `DataIntegrityViolationException` **solo** si la restricción violada es `uk_persona_identificacion` (carrera entre dos altas simultáneas) | 409 | Identificación duplicada |
+  | `ReglaNegocioException` (p. ej. `ClienteEliminadoException`) | 422 | Regla de negocio incumplida |
+  | `Exception` y cualquier otra `DataIntegrityViolationException` | 500 | Error interno (sin detalle; se registra en log) |
 
   Se habilita `spring.mvc.problemdetails.enabled=true`.
 - **Rationale**: Principio VII; las excepciones de dominio no conocen HTTP, el mapeo vive en un

@@ -74,8 +74,8 @@ implementar.
 ### Esquema
 
 - [ ] T010 Crear `R/db/migration/V1__crear_tablas_persona_cliente.sql` según data-model.md:
-  - **persona**: `id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`, `nombre VARCHAR(100) NOT NULL`, `genero VARCHAR(10) NOT NULL`, `edad SMALLINT NOT NULL CHECK (edad BETWEEN 18 AND 120)`, `identificacion VARCHAR(20) NOT NULL UNIQUE`, `direccion VARCHAR(200) NOT NULL`, `telefono VARCHAR(15) NOT NULL`.
-  - **cliente**: `persona_id BIGINT PRIMARY KEY REFERENCES persona(id)`, `cliente_id UUID NOT NULL UNIQUE`, `contrasena VARCHAR(100) NOT NULL`, `estado BOOLEAN NOT NULL DEFAULT TRUE`, `eliminado BOOLEAN NOT NULL DEFAULT FALSE`, `fecha_creacion TIMESTAMPTZ NOT NULL`, `fecha_actualizacion TIMESTAMPTZ NOT NULL`.
+  - **persona**: `id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY`, `nombre VARCHAR(100) NOT NULL`, `genero VARCHAR(10) NOT NULL`, `edad INTEGER NOT NULL CONSTRAINT ck_persona_edad CHECK (edad BETWEEN 18 AND 120)`, `identificacion VARCHAR(20) NOT NULL CONSTRAINT uk_persona_identificacion UNIQUE`, `direccion VARCHAR(200) NOT NULL`, `telefono VARCHAR(15) NOT NULL`.
+  - **cliente**: `persona_id BIGINT PRIMARY KEY REFERENCES persona(id)`, `cliente_id UUID NOT NULL CONSTRAINT uk_cliente_cliente_id UNIQUE`, `contrasena VARCHAR(100) NOT NULL`, `estado BOOLEAN NOT NULL DEFAULT TRUE`, `eliminado BOOLEAN NOT NULL DEFAULT FALSE`, `fecha_creacion TIMESTAMPTZ NOT NULL`, `fecha_actualizacion TIMESTAMPTZ NOT NULL`.
   - **Índice**: `idx_cliente_eliminado_estado (eliminado, estado)`.
 
 ### Entidad de dominio (TDD — F5)
@@ -131,11 +131,12 @@ implementar.
   |---|---|---|
   | Validación (`MethodArgumentNotValidException`, `HandlerMethodValidationException`) | 400 | "Datos inválidos", con propiedad `errores` (campo → mensaje) |
   | `HttpMessageNotReadableException` | 400 | "Solicitud mal formada" |
-  | `MethodArgumentTypeMismatchException` (UUID inválido) | 400 | — |
+  | `DomainValidationException` | 400 | "Datos inválidos" |
+  | `MethodArgumentTypeMismatchException` (UUID inválido) y `PropertyReferenceException` (`sort` inválido) | 400 | "Parámetro inválido" |
   | `ClienteNoEncontradoException` | 404 | "Cliente no encontrado" |
-  | `IdentificacionDuplicadaException` y `DataIntegrityViolationException` por la unicidad de identificación | 409 | "Identificación duplicada" |
-  | `ReglaNegocioException` | 422 | — |
-  | `Exception` | 500 | "Error interno", sin detalle (con `log.error`) |
+  | `IdentificacionDuplicadaException`, y `DataIntegrityViolationException` **solo** si el nombre de la restricción violada es `uk_persona_identificacion` | 409 | "Identificación duplicada" |
+  | `ReglaNegocioException` (p. ej. `ClienteEliminadoException`) | 422 | "Regla de negocio incumplida" |
+  | `Exception` y cualquier otra `DataIntegrityViolationException` | 500 | "Error interno", sin detalle (con `log.error`) |
 - [ ] T021 [P] Crear `M/cliente/dto/ClienteResponse.java`, un record con `clienteId`, `nombre`, `genero`, `edad`, `identificacion`, `direccion`, `telefono` y `estado`. **Sin `contrasena`.** También crear `M/cliente/mapper/ClienteMapper.java` (MapStruct, `componentModel = "spring"`) con el método `toResponse(Cliente)`
 - [ ] T022 [P] Crear `M/shared/config/OpenApiConfig.java` con el título "ms-clientes API", la versión 1.0.0 y la descripción
 - [ ] T023 [P] Crear `T/support/TestcontainersConfig.java` (`@TestConfiguration(proxyBeanMethods = false)`) con beans `@ServiceConnection` de `PostgreSQLContainer("postgres:16-alpine")` y `RabbitMQContainer("rabbitmq:3.13-management")`
@@ -173,7 +174,7 @@ implementar.
   - Validar el 201 y que la respuesta no incluya `contrasena`.
 
   Y el escenario "Identificación duplicada": responde 409.
-- [ ] T027 [P] [US1] Crear `T/cliente/ClienteIntegrationTest.java` (`@SpringBootTest`, `@Import(TestcontainersConfig.class)`, `MockMvc` o `TestRestTemplate`) que declare una cola temporal enlazada a `clientes.exchange` con `cliente.*`. Debe verificar:
+- [ ] T027 [P] [US1] Crear `T/cliente/ClienteIntegrationTest.java` (`@SpringBootTest`, `@Import(TestcontainersConfig.class)`, `MockMvc` o `TestRestTemplate`) que declare una cola temporal enlazada a `clientes.exchange` con `cliente.*` y lea los mensajes con `rabbitTemplate.receiveAndConvert(cola, 5000)` (SC-005: menos de 5 s). Debe verificar:
   - Un POST válido persiste la fila, la contraseña queda guardada como hash BCrypt (empieza con `$2`) y llega exactamente un mensaje `CLIENTE_CREADO` sin contraseña.
   - Un POST con identificación duplicada no publica ningún mensaje.
 
@@ -222,6 +223,7 @@ implementar.
 - [ ] T032 [P] [US2] En `T/cliente/controller/ClienteControllerTest.java`, agregar pruebas de:
   - `GET /clientes/{id}`: 200, 404, y 400 si el UUID es inválido.
   - `GET /clientes?page=0&size=20&estado=true&identificacion=1712345678`: 200, con la estructura `contenido`, `pagina`, `tamano`, `totalElementos`, `totalPaginas`.
+  - `GET /clientes?sort=campoInexistente`: 400 "Parámetro inválido" (no 500).
 - [ ] T033 [P] [US2] En `TR/karate/clientes/clientes.feature`, agregar escenarios para:
   - consultar por id (200, sin `contrasena`);
   - id inexistente (404);
@@ -310,8 +312,8 @@ implementar.
   - publica `CLIENTE_ELIMINADO` con `estado=false`;
   - si el cliente no existe, lanza `ClienteNoEncontradoException`.
 - [ ] T048 [P] [US4] En `T/cliente/controller/ClienteControllerTest.java`, agregar pruebas de `DELETE /clientes/{id}`: 204 y 404
-- [ ] T049 [P] [US4] En `TR/karate/clientes/clientes.feature`, agregar el escenario "Eliminación lógica": DELETE (204), GET (404), DELETE (404), POST con la misma identificación (409) y el listado ya no lo incluye
-- [ ] T050 [P] [US4] En `T/cliente/ClienteIntegrationTest.java`, agregar el ciclo completo: crear, PATCH y DELETE publican exactamente 3 mensajes (`CLIENTE_CREADO`, `CLIENTE_ACTUALIZADO`, `CLIENTE_ELIMINADO`) con `eventId` distintos, y la fila sigue en BD con `eliminado = true`
+- [ ] T049 [P] [US4] En `TR/karate/clientes/clientes.feature`, agregar el escenario "Eliminación lógica": DELETE (204), GET (404), PATCH (404), PUT (404), DELETE (404), POST con la misma identificación (409) y el listado ya no lo incluye (FR-012a)
+- [ ] T050 [P] [US4] En `T/cliente/ClienteIntegrationTest.java`, agregar el ciclo completo: crear, PATCH y DELETE publican exactamente 3 mensajes (`CLIENTE_CREADO`, `CLIENTE_ACTUALIZADO`, `CLIENTE_ELIMINADO`) con `eventId` distintos, cada uno recibido en menos de 5 s (`receiveAndConvert(cola, 5000)`), y la fila sigue en BD con `eliminado = true`
 
 ### Implementation for User Story 4
 

@@ -11,7 +11,7 @@
 │ id             BIGINT PK      │        │ persona_id   BIGINT PK, FK    │
 │ nombre         VARCHAR(100)   │        │ cliente_id   UUID UNIQUE      │
 │ genero         VARCHAR(10)    │        │ contrasena   VARCHAR(100)     │
-│ edad           SMALLINT       │        │ estado       BOOLEAN          │
+│ edad           INTEGER        │        │ estado       BOOLEAN          │
 │ identificacion VARCHAR(20) UQ │        │ eliminado    BOOLEAN          │
 │ direccion      VARCHAR(200)   │        │ fecha_creacion     TIMESTAMPTZ│
 │ telefono       VARCHAR(15)    │        │ fecha_actualizacion TIMESTAMPTZ│
@@ -27,8 +27,8 @@ Herencia JPA `JOINED`: `Persona` (abstracta) → `Cliente` (ver research R2).
 | id | `Long` | `id BIGINT GENERATED ALWAYS AS IDENTITY` PK | Técnico, nunca se expone |
 | nombre | `String` | `nombre VARCHAR(100) NOT NULL` | Obligatorio, 1–100 caracteres, sin solo espacios |
 | genero | `Genero` (enum) | `genero VARCHAR(10) NOT NULL` | `MASCULINO`, `FEMENINO`, `OTRO` (FR-005) |
-| edad | `Integer` | `edad SMALLINT NOT NULL` + `CHECK (edad BETWEEN 18 AND 120)` | 18–120, solo mayores de edad (FR-006) |
-| identificacion | `String` | `identificacion VARCHAR(20) NOT NULL UNIQUE` | Alfanumérica de 5–20 caracteres (FR-006); única entre todos los clientes incluidos eliminados (FR-004, FR-012b) |
+| edad | `Integer` | `edad INTEGER NOT NULL` + `CONSTRAINT ck_persona_edad CHECK (edad BETWEEN 18 AND 120)` | 18–120, solo mayores de edad (FR-006) |
+| identificacion | `String` | `identificacion VARCHAR(20) NOT NULL` + `CONSTRAINT uk_persona_identificacion UNIQUE` | Alfanumérica de 5–20 caracteres (FR-006); única entre todos los clientes incluidos eliminados (FR-004, FR-012b) |
 | direccion | `String` | `direccion VARCHAR(200) NOT NULL` | Obligatoria, 1–200 caracteres |
 | telefono | `String` | `telefono VARCHAR(15) NOT NULL` | Solo dígitos, 7–15 (FR-006) |
 
@@ -86,8 +86,8 @@ desactivar()   │        │
 
 | Tabla | Índice | Motivo |
 |---|---|---|
-| persona | `UNIQUE (identificacion)` | Unicidad (FR-004) y búsqueda de duplicados |
-| cliente | `UNIQUE (cliente_id)` | Búsqueda por identificador público |
+| persona | `uk_persona_identificacion UNIQUE (identificacion)` | Unicidad (FR-004) y búsqueda de duplicados; el nombre de la restricción permite mapear su violación a 409 |
+| cliente | `uk_cliente_cliente_id UNIQUE (cliente_id)` | Búsqueda por identificador público |
 | cliente | `idx_cliente_eliminado_estado (eliminado, estado)` | Filtros del listado |
 
 ## Concurrencia
