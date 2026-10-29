@@ -79,8 +79,10 @@ decisiones de diseño concretas que la constitución deja abiertas.
 ## R7. Actualización completa (PUT) vs parcial (PATCH)
 
 - **Decision**: `PUT` con `ClienteUpdateRequest` (todos los campos editables obligatorios,
-  **sin contraseña**; el DTO usa `@JsonIgnoreProperties(ignoreUnknown = false)` para que enviar
-  `contrasena` produzca 400). La contraseña solo se cambia por `PATCH`. `PATCH` con `ClientePatchRequest` cuyos campos son todos opcionales
+  **sin contraseña**). La contraseña solo se cambia por `PATCH`. Se activa globalmente
+  `spring.jackson.deserialization.fail-on-unknown-properties=true`, de modo que enviar
+  `contrasena` (o cualquier campo desconocido) en un PUT produce 400 "Solicitud mal formada".
+  Una anotación por DTO no basta porque Spring Boot desactiva ese fallo por defecto. `PATCH` con `ClientePatchRequest` cuyos campos son todos opcionales
   (`null` = no cambiar); se valida con una restricción de clase propia `@AlMenosUnCampo` y Bean
   Validation sobre los campos presentes.
 - **Rationale**: Semántica HTTP correcta y simple. Evita JSON Patch (RFC 6902), que es más
