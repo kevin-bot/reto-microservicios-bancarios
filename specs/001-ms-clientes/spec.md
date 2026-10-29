@@ -17,6 +17,15 @@ de cliente para que ms-cuentas mantenga su réplica local."
 - Q: ¿La eliminación de un cliente es física o lógica? → A: Lógica: queda marcado como
   eliminado e inactivo, fuera del listado, responde "no encontrado" y su identificación queda
   reservada.
+- Q: ¿Debe exigirse que el cliente sea mayor de edad? → A: Sí, edad entre 18 y 120.
+- Q: ¿Cómo se valida la identificación? → A: Alfanumérico genérico de 5 a 20 caracteres, sin
+  validar algoritmo de cédula.
+- Q: ¿La actualización completa incluye la contraseña? → A: No; la contraseña solo se cambia
+  mediante actualización parcial.
+- Q: ¿Se detectan ediciones simultáneas del mismo cliente? → A: No; gana la última escritura
+  confirmada (sin control de concurrencia).
+- Q: ¿Qué incluye el listado de clientes? → A: Activos e inactivos (nunca eliminados), con
+  filtros opcionales por estado e identificación.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -41,7 +50,7 @@ del enunciado) y verificar que cada uno se puede consultar después con su ident
 2. **Given** ya existe un cliente con identificación "1712345678", **When** se intenta registrar
    otro cliente con la misma identificación, **Then** el sistema rechaza el registro indicando que
    la identificación ya está registrada.
-3. **Given** un registro con campos obligatorios vacíos o inválidos (p. ej. edad negativa),
+3. **Given** un registro con campos obligatorios vacíos o inválidos (p. ej. edad 17),
    **When** el operador lo envía, **Then** el sistema lo rechaza indicando cada campo inválido.
 4. **Given** un cliente registrado correctamente, **When** se completa el registro, **Then** se
    notifica a los demás servicios que existe un nuevo cliente.
@@ -62,9 +71,11 @@ consultar un identificador inexistente.
 
 1. **Given** un cliente registrado, **When** el operador lo consulta por su identificador,
    **Then** obtiene todos sus datos excepto la contraseña.
-2. **Given** varios clientes registrados, **When** el operador solicita el listado, **Then** obtiene
-   los clientes de forma paginada.
-3. **Given** un identificador que no existe, **When** el operador lo consulta, **Then** el sistema
+2. **Given** varios clientes registrados (activos e inactivos), **When** el operador solicita el
+   listado, **Then** obtiene todos los clientes no eliminados de forma paginada.
+3. **Given** varios clientes registrados, **When** el operador filtra por identificación o por
+   estado, **Then** obtiene solo los clientes que cumplen el filtro.
+4. **Given** un identificador que no existe, **When** el operador lo consulta, **Then** el sistema
    responde que el cliente no fue encontrado.
 
 ---
@@ -82,11 +93,13 @@ al consultarlo.
 
 **Acceptance Scenarios**:
 
-1. **Given** un cliente registrado, **When** el operador reemplaza todos sus datos editables con
-   valores válidos, **Then** el sistema guarda los nuevos valores y los devuelve.
+1. **Given** un cliente registrado, **When** el operador reemplaza todos sus datos editables
+   (excepto la contraseña) con valores válidos, **Then** el sistema guarda los nuevos valores, los
+   devuelve y la contraseña no cambia.
 2. **Given** un cliente registrado, **When** el operador modifica solo su dirección, **Then** solo
    la dirección cambia y el resto de datos se conserva.
-3. **Given** un cliente registrado, **When** el operador cambia su contraseña, **Then** la nueva
+3. **Given** un cliente registrado, **When** el operador cambia su contraseña mediante una
+   actualización parcial, **Then** la nueva
    contraseña queda almacenada de forma protegida y no se devuelve en la respuesta.
 4. **Given** un cliente activo, **When** el operador lo desactiva, **Then** su estado queda
    inactivo.
@@ -125,7 +138,12 @@ notificó la eliminación.
 
 - Registrar o actualizar con una identificación que ya pertenece a otro cliente → se rechaza como
   conflicto.
-- Edad fuera de rango (negativa o mayor a 120) → se rechaza como dato inválido.
+- Edad fuera de rango (menor a 18 o mayor a 120) → se rechaza como dato inválido.
+- Identificación con caracteres no alfanuméricos o longitud fuera de 5–20 → se rechaza.
+- Actualización completa que incluye contraseña → el campo no está permitido y la solicitud se
+  rechaza como dato inválido.
+- Dos operadores actualizan el mismo cliente a la vez → prevalece la última actualización
+  confirmada; ambas generan su notificación.
 - Género fuera de los valores permitidos → se rechaza como dato inválido.
 - Teléfono con caracteres no numéricos o longitud fuera de 7–15 dígitos → se rechaza.
 - Contraseña vacía o menor a 4 caracteres → se rechaza.
@@ -151,8 +169,9 @@ notificó la eliminación.
   ("clienteId") generado por el sistema, que no puede modificarse.
 - **FR-004**: La identificación (documento de identidad) MUST ser única entre todos los clientes.
 - **FR-005**: Los valores de género permitidos MUST ser: MASCULINO, FEMENINO, OTRO.
-- **FR-006**: La edad MUST estar entre 0 y 120; el teléfono MUST contener solo dígitos (7–15); la
-  contraseña MUST tener al menos 4 caracteres.
+- **FR-006**: La edad MUST estar entre 18 y 120; la identificación MUST ser alfanumérica de 5 a 20
+  caracteres; el teléfono MUST contener solo dígitos (7–15); la contraseña MUST tener al menos 4
+  caracteres.
 
 **Seguridad**
 
@@ -162,14 +181,15 @@ notificó la eliminación.
 **Consulta**
 
 - **FR-008**: El sistema MUST permitir consultar un cliente por su identificador.
-- **FR-009**: El sistema MUST permitir listar los clientes de forma paginada.
+- **FR-009**: El sistema MUST permitir listar de forma paginada los clientes activos e inactivos
+  (nunca los eliminados), con filtros opcionales y combinables por estado y por identificación.
 
 **Actualización**
 
 - **FR-010**: El sistema MUST permitir el reemplazo completo de los datos editables de un cliente
-  (todos los campos de FR-001 excepto el identificador de cliente).
+  (todos los campos de FR-001 excepto el identificador de cliente y la contraseña).
 - **FR-011**: El sistema MUST permitir la actualización parcial de uno o más campos editables;
-  los campos no enviados se conservan.
+  los campos no enviados se conservan. Es el único medio para cambiar la contraseña.
 
 **Eliminación**
 
@@ -240,6 +260,8 @@ notificó la eliminación.
   pruebas completará esos campos con valores válidos.
 - El listado de clientes usa paginación con tamaño por defecto de 20 elementos.
 - La identificación puede modificarse por actualización, siempre que siga siendo única.
+- No hay control de concurrencia sobre clientes: ante ediciones simultáneas gana la última
+  escritura confirmada (riesgo aceptado: baja contención en datos personales).
 - Las consecuencias de eliminar o desactivar un cliente sobre sus cuentas las decide ms-cuentas
   (feature posterior) a partir de las notificaciones; ms-clientes no conoce las cuentas.
 - Si la mensajería no está disponible, el cambio del cliente no se revierte; la publicación
