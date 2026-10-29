@@ -153,19 +153,19 @@ implementar.
 
 ### Tests for User Story 1 ⚠️ (escribir primero; deben fallar)
 
-- [ ] T024 [P] [US1] En `T/cliente/service/ClienteServiceImplTest.java` (Mockito: `ClienteRepository`, `PasswordEncoder`, `ApplicationEventPublisher`, `ClienteMapper`), probar `crear`:
+- [X] T024 [P] [US1] En `T/cliente/service/ClienteServiceImplTest.java` (Mockito: `ClienteRepository`, `PasswordEncoder`, `ApplicationEventPublisher`, `ClienteMapper`), probar `crear`:
   - hashea la contraseña con `PasswordEncoder` y nunca guarda el texto plano;
   - guarda el cliente;
   - publica un `ClienteEventoDominio` de tipo `CLIENTE_CREADO`;
   - si `existsByIdentificacion` es `true`, lanza `IdentificacionDuplicadaException` y no guarda ni publica.
-- [ ] T025 [P] [US1] En `T/cliente/controller/ClienteControllerTest.java` (`@WebMvcTest(ClienteController.class)`, `@MockitoBean ClienteService`, importa `GlobalExceptionHandler`), probar `POST /clientes`:
+- [X] T025 [P] [US1] En `T/cliente/controller/ClienteControllerTest.java` (`@WebMvcTest(ClienteController.class)`, `@MockitoBean ClienteService`, importa `GlobalExceptionHandler`), probar `POST /clientes`:
   - **201** con el header `Location` y un cuerpo sin la clave `contrasena`.
   - **400** con `errores.edad` para edad 17.
   - **400** para una identificación `"ab-1"`.
   - **400** si faltan campos obligatorios.
   - **400** para un JSON mal formado.
   - **409** cuando el service lanza `IdentificacionDuplicadaException`.
-- [ ] T026 [P] [US1] Crear el runner `T/karate/ClientesKarateTest.java`:
+- [X] T026 [P] [US1] Crear el runner `T/karate/ClientesKarateTest.java`:
   - `@SpringBootTest(webEnvironment = RANDOM_PORT)` con `@Import(TestcontainersConfig.class)`.
   - Un método `@Karate.Test` que fija la propiedad del sistema `karate.baseUrl = http://localhost:{port}/api`.
 
@@ -174,13 +174,13 @@ implementar.
   - Validar el 201 y que la respuesta no incluya `contrasena`.
 
   Y el escenario "Identificación duplicada": responde 409.
-- [ ] T027 [P] [US1] Crear `T/cliente/ClienteIntegrationTest.java` (`@SpringBootTest`, `@Import(TestcontainersConfig.class)`, `MockMvc` o `TestRestTemplate`) que declare una cola temporal enlazada a `clientes.exchange` con `cliente.*` y lea los mensajes con `rabbitTemplate.receiveAndConvert(cola, 5000)` (SC-005: menos de 5 s). Debe verificar:
+- [X] T027 [P] [US1] Crear `T/cliente/ClienteIntegrationTest.java` (`@SpringBootTest`, `@Import(TestcontainersConfig.class)`, `MockMvc` o `TestRestTemplate`) que declare una cola temporal enlazada a `clientes.exchange` con `cliente.*` y lea los mensajes con `rabbitTemplate.receiveAndConvert(cola, 5000)` (SC-005: menos de 5 s). Debe verificar:
   - Un POST válido persiste la fila, la contraseña queda guardada como hash BCrypt (empieza con `$2`) y llega exactamente un mensaje `CLIENTE_CREADO` sin contraseña.
   - Un POST con identificación duplicada no publica ningún mensaje.
 
 ### Implementation for User Story 1
 
-- [ ] T028 [P] [US1] Crear el record `M/cliente/dto/ClienteCreateRequest.java` con Bean Validation tal como en contracts/clientes-api.yaml:
+- [X] T028 [P] [US1] Crear el record `M/cliente/dto/ClienteCreateRequest.java` con Bean Validation tal como en contracts/clientes-api.yaml:
 
   | Campo | Restricciones |
   |---|---|
@@ -192,14 +192,14 @@ implementar.
   | `telefono` | `@NotBlank @Pattern("^[0-9]{7,15}$")` |
   | `contrasena` | `@NotBlank @Size(min=4, max=72)` |
   | `estado` | `Boolean`; si es `null`, se toma `true` |
-- [ ] T029 [US1] Crear la interfaz `M/cliente/service/ClienteService.java` con `ClienteResponse crear(ClienteCreateRequest)`, y su implementación `M/cliente/service/ClienteServiceImpl.java`:
+- [X] T029 [US1] Crear la interfaz `M/cliente/service/ClienteService.java` con `ClienteResponse crear(ClienteCreateRequest)`, y su implementación `M/cliente/service/ClienteServiceImpl.java`:
   - `@Transactional`.
   - Valida duplicados con `existsByIdentificacion`.
   - Hashea con `PasswordEncoder` y crea el cliente con `Cliente.crear(...)`.
   - Hace `save` y publica `ClienteEventoDominio(ClienteEvento.desde(cliente, CLIENTE_CREADO))`.
   - Devuelve `mapper.toResponse(...)`.
   - Registra `log.info` solo con el `clienteId`.
-- [ ] T030 [US1] Crear `M/cliente/controller/ClienteController.java` (`@RestController`, `@RequestMapping("/clientes")`, depende solo de la interfaz `ClienteService`) con `POST` y `@Valid`. Debe responder `201 Created` con `Location: /api/clientes/{clienteId}` y anotaciones de springdoc (`@Operation`, `@ApiResponse`)
+- [X] T030 [US1] Crear `M/cliente/controller/ClienteController.java` (`@RestController`, `@RequestMapping("/clientes")`, depende solo de la interfaz `ClienteService`) con `POST` y `@Valid`. Debe responder `201 Created` con `Location: /api/clientes/{clienteId}` y anotaciones de springdoc (`@Operation`, `@ApiResponse`)
 
 **Checkpoint**: T024–T027 en verde. La US1 es demostrable por sí sola: es el MVP.
 
