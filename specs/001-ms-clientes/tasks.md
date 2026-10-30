@@ -326,33 +326,33 @@ implementar.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T053 [P] Crear `ms-clientes/Dockerfile` multi-stage:
+- [X] T053 [P] Crear `ms-clientes/Dockerfile` multi-stage:
   - **Etapa de build**: `maven:3.9-eclipse-temurin-21`, copia el `pom.xml`, ejecuta `dependency:go-offline`, copia `src` y ejecuta `package -DskipTests`.
   - **Etapa de runtime**: `eclipse-temurin:21-jre-alpine`, usuario no root, `EXPOSE 8081`, `ENTRYPOINT java -jar app.jar`.
-- [ ] T054 [P] Crear `ms-clientes/.dockerignore` que excluya `target/`, `.idea/` y `*.iml`
-- [ ] T055 Agregar el servicio `ms-clientes` a `docker-compose.yml`:
+- [X] T054 [P] Crear `ms-clientes/.dockerignore` que excluya `target/`, `.idea/` y `*.iml`
+- [X] T055 Agregar el servicio `ms-clientes` a `docker-compose.yml`:
   - `build: ./ms-clientes`, puerto `8081:8081`.
   - Variables de entorno `DB_URL=jdbc:postgresql://postgres:5432/clientes_db`, `DB_USER`, `DB_PASSWORD`, `RABBIT_HOST=rabbitmq`.
   - `depends_on` de `postgres` y `rabbitmq` con `condition: service_healthy`.
   - Healthcheck con `wget -qO- http://localhost:8081/api/actuator/health`.
-- [ ] T056 [P] Crear `postman/ms-clientes.postman_collection.json`:
+- [X] T056 [P] Crear `postman/ms-clientes.postman_collection.json`:
   - Variable `baseUrl = http://localhost:8081/api`.
   - Requests para el caso de uso 1 (3 clientes) y para los escenarios 1–11 del quickstart.
   - Un script de test que guarda `clienteId` en una variable y verifica códigos de estado y la ausencia de `contrasena`.
-- [ ] T057 [P] Crear `ms-clientes/README.md` con:
+- [X] T057 [P] Crear `ms-clientes/README.md` con:
   - requisitos (Java 21, Docker);
   - `./mvnw test` (con Docker encendido para Testcontainers);
   - ejecución con `docker compose up -d --build`;
   - URLs de Swagger y de RabbitMQ;
   - resumen de endpoints y eventos;
   - decisiones de arquitectura y mejoras futuras: Transactional Outbox, bloqueo optimista y validación de cédula.
-- [ ] T058 Revisión de cumplimiento de la constitución:
+- [X] T058 Revisión de cumplimiento de la constitución:
   - Buscar con grep que no haya `@Data`, `@Setter` ni `@EqualsAndHashCode` en `M/cliente/entity/`.
   - Verificar que ninguna entidad se exponga en controllers.
   - Verificar que `contrasena` no aparezca en ningún DTO de respuesta ni en los eventos.
   - Verificar que no queden código comentado ni TODOs huérfanos.
-- [ ] T059 Ejecutar `./mvnw test` en `ms-clientes/` (con Docker encendido): todas las pruebas en verde (unitarias, `@WebMvcTest`, integración y Karate)
-- [ ] T060 Ejecutar la validación de quickstart.md: `docker compose up -d --build`, los escenarios 1–11 con la colección Postman y la verificación de eventos en el RabbitMQ management
+- [X] T059 Ejecutar `./mvnw test` en `ms-clientes/` (con Docker encendido): todas las pruebas en verde (unitarias, `@WebMvcTest`, integración y Karate)
+- [X] T060 Ejecutar la validación de quickstart.md: `docker compose up -d --build`, los escenarios 1–11 con la colección Postman y la verificación de eventos en el RabbitMQ management
 
 ---
 
