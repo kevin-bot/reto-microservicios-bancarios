@@ -64,3 +64,59 @@ Feature: API de clientes (ms-clientes)
     When method post
     Then status 400
     And match response.errores.edad == '#string'
+
+  Scenario: Consultar un cliente por su identificador
+    * def identificacion = identificacionUnica()
+    Given path 'clientes'
+    And request { nombre: 'Cliente Consulta', genero: 'FEMENINO', edad: 45, identificacion: '#(identificacion)', direccion: 'Cuenca', telefono: '0987654321', contrasena: 'clave1' }
+    When method post
+    Then status 201
+    * def clienteId = response.clienteId
+
+    Given path 'clientes', clienteId
+    When method get
+    Then status 200
+    And match response.clienteId == clienteId
+    And match response.identificacion == identificacion
+    And match response.contrasena == '#notpresent'
+
+  Scenario: Consultar un identificador inexistente responde 404
+    Given path 'clientes', UUID.randomUUID().toString()
+    When method get
+    Then status 404
+    And match response.title == 'Cliente no encontrado'
+
+  Scenario: Listar clientes paginado y filtrar por identificación
+    * def identificacion = identificacionUnica()
+    Given path 'clientes'
+    And request { nombre: 'Cliente Listado', genero: 'OTRO', edad: 50, identificacion: '#(identificacion)', direccion: 'Loja', telefono: '0981112233', contrasena: 'clave1', estado: false }
+    When method post
+    Then status 201
+
+    Given path 'clientes'
+    And params { page: 0, size: 20 }
+    When method get
+    Then status 200
+    And match response == { contenido: '#[_ > 0]', pagina: 0, tamano: 20, totalElementos: '#number', totalPaginas: '#number' }
+    And match each response.contenido == { clienteId: '#uuid', nombre: '#string', genero: '#string', edad: '#number', identificacion: '#string', direccion: '#string', telefono: '#string', estado: '#boolean' }
+
+    Given path 'clientes'
+    And param identificacion = identificacion
+    When method get
+    Then status 200
+    And match response.totalElementos == 1
+    And match response.contenido[0].identificacion == identificacion
+    And match response.contenido[0].estado == false
+
+    Given path 'clientes'
+    And params { identificacion: '#(identificacion)', estado: true }
+    When method get
+    Then status 200
+    And match response.totalElementos == 0
+
+  Scenario: Ordenar por un campo inexistente responde 400
+    Given path 'clientes'
+    And param sort = 'campoInexistente'
+    When method get
+    Then status 400
+    And match response.title == 'Parámetro inválido'

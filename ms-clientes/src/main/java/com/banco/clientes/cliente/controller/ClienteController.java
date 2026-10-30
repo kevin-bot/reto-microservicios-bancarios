@@ -3,19 +3,27 @@ package com.banco.clientes.cliente.controller;
 import com.banco.clientes.cliente.dto.ClienteCreateRequest;
 import com.banco.clientes.cliente.dto.ClienteResponse;
 import com.banco.clientes.cliente.service.ClienteService;
+import com.banco.clientes.shared.dto.PaginaResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/clientes")
@@ -37,5 +45,23 @@ public class ClienteController {
                 .buildAndExpand(creado.clienteId())
                 .toUri();
         return ResponseEntity.created(location).body(creado);
+    }
+
+    @GetMapping("/{clienteId}")
+    @Operation(summary = "Consultar un cliente")
+    @ApiResponse(responseCode = "200", description = "Cliente encontrado")
+    @ApiResponse(responseCode = "404", description = "Cliente inexistente o eliminado")
+    public ClienteResponse obtener(@PathVariable UUID clienteId) {
+        return clienteService.obtener(clienteId);
+    }
+
+    @GetMapping
+    @Operation(summary = "Listar clientes activos e inactivos (paginado, filtros opcionales)")
+    @ApiResponse(responseCode = "200", description = "Página de clientes")
+    public PaginaResponse<ClienteResponse> listar(
+            @RequestParam(required = false) Boolean estado,
+            @RequestParam(required = false) String identificacion,
+            @ParameterObject @PageableDefault(size = 20, sort = "nombre") Pageable pageable) {
+        return clienteService.listar(estado, identificacion, pageable);
     }
 }

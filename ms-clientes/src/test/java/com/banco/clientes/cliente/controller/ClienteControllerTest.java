@@ -2,25 +2,37 @@ package com.banco.clientes.cliente.controller;
 
 import com.banco.clientes.cliente.dto.ClienteCreateRequest;
 import com.banco.clientes.cliente.dto.ClienteResponse;
+import com.banco.clientes.cliente.entity.Cliente;
 import com.banco.clientes.cliente.entity.Genero;
+import com.banco.clientes.cliente.exception.ClienteNoEncontradoException;
 import com.banco.clientes.cliente.exception.IdentificacionDuplicadaException;
 import com.banco.clientes.cliente.service.ClienteService;
+import com.banco.clientes.shared.dto.PaginaResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.endsWith;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -142,6 +154,103 @@ class ClienteControllerTest {
             mockMvc.perform(post("/clientes").contentType(MediaType.APPLICATION_JSON).content(CLIENTE_VALIDO))
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.title").value("Identificación duplicada"));
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /clientes/{clienteId}")
+    class Obtener {
+
+        @Test
+        @DisplayName("200 con los datos del cliente y sin contraseña")
+        void obtener_cuandoClienteExiste_debeResponder200() throws Exception {
+            // Given
+            when(clienteService.obtener(CLIENTE_ID)).thenReturn(respuestaJoseLema());
+
+            // When / Then
+            mockMvc.perform(get("/clientes/{clienteId}", CLIENTE_ID))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.clienteId").value(CLIENTE_ID.toString()))
+                    .andExpect(jsonPath("$.identificacion").value("1712345678"))
+                    .andExpect(jsonPath("$.contrasena").doesNotExist());
+        }
+
+        @Test
+        @DisplayName("404 cuando el cliente no existe")
+        void obtener_cuandoClienteNoExiste_debeResponder404() throws Exception {
+            // Given
+            when(clienteService.obtener(CLIENTE_ID)).thenThrow(new ClienteNoEncontradoException(CLIENTE_ID));
+
+            // When / Then
+            mockMvc.perform(get("/clientes/{clienteId}", CLIENTE_ID))
+                    .andExpect(status().isNotFound())
+                    .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                    .andExpect(jsonPath("$.title").value("Cliente no encontrado"));
+        }
+
+        @Test
+        @DisplayName("400 cuando el identificador no es un UUID")
+        void obtener_cuandoIdentificadorNoEsUuid_debeResponder400() throws Exception {
+            mockMvc.perform(get("/clientes/{clienteId}", "no-es-un-uuid"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.title").value("Parámetro inválido"));
+            verify(clienteService, never()).obtener(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /clientes")
+    class Listar {
+
+        @Test
+        @DisplayName("200 con la página de clientes y los filtros aplicados")
+        void listar_cuandoHayFiltros_debeResponder200ConPagina() throws Exception {
+            // Given
+            PaginaResponse<ClienteResponse> pagina = new PaginaResponse<>(List.of(respuestaJoseLema()), 0, 20, 1, 1);
+            when(clienteService.listar(eq(true), eq("1712345678"), any(Pageable.class))).thenReturn(pagina);
+
+            // When / Then
+            mockMvc.perform(get("/clientes")
+                            .param("page", "0").param("size", "20")
+                            .param("estado", "true").param("identificacion", "1712345678"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.contenido[0].clienteId").value(CLIENTE_ID.toString()))
+                    .andExpect(jsonPath("$.contenido[0].contrasena").doesNotExist())
+                    .andExpect(jsonPath("$.pagina").value(0))
+                    .andExpect(jsonPath("$.tamano").value(20))
+                    .andExpect(jsonPath("$.totalElementos").value(1))
+                    .andExpect(jsonPath("$.totalPaginas").value(1));
+        }
+
+        @Test
+        @DisplayName("Sin parámetros usa página 0, tamaño 20 y orden por nombre")
+        void listar_cuandoSinParametros_debeUsarPaginacionPorDefecto() throws Exception {
+            // Given
+            when(clienteService.listar(any(), any(), any(Pageable.class)))
+                    .thenReturn(new PaginaResponse<>(List.of(), 0, 20, 0, 0));
+
+            // When
+            mockMvc.perform(get("/clientes")).andExpect(status().isOk());
+
+            // Then
+            ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+            verify(clienteService).listar(isNull(), isNull(), pageable.capture());
+            assertThat(pageable.getValue().getPageNumber()).isZero();
+            assertThat(pageable.getValue().getPageSize()).isEqualTo(20);
+            assertThat(pageable.getValue().getSort().getOrderFor("nombre")).isNotNull();
+        }
+
+        @Test
+        @DisplayName("400 cuando se ordena por un campo inexistente")
+        void listar_cuandoOrdenInvalido_debeResponder400() throws Exception {
+            // Given
+            when(clienteService.listar(any(), any(), any(Pageable.class))).thenThrow(
+                    new PropertyReferenceException("campoInexistente", TypeInformation.of(Cliente.class), List.of()));
+
+            // When / Then
+            mockMvc.perform(get("/clientes").param("sort", "campoInexistente"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.title").value("Parámetro inválido"));
         }
     }
 }

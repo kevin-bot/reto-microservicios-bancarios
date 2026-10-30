@@ -217,14 +217,14 @@ implementar.
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T031 [P] [US2] En `T/cliente/service/ClienteServiceImplTest.java`, agregar pruebas de:
+- [X] T031 [P] [US2] En `T/cliente/service/ClienteServiceImplTest.java`, agregar pruebas de:
   - `obtener`: devuelve el response si existe, y lanza `ClienteNoEncontradoException` si `findByClienteIdAndEliminadoFalse` está vacío.
   - `listar`: delega en `findAll(Specification, Pageable)` y devuelve un `PaginaResponse`.
-- [ ] T032 [P] [US2] En `T/cliente/controller/ClienteControllerTest.java`, agregar pruebas de:
+- [X] T032 [P] [US2] En `T/cliente/controller/ClienteControllerTest.java`, agregar pruebas de:
   - `GET /clientes/{id}`: 200, 404, y 400 si el UUID es inválido.
   - `GET /clientes?page=0&size=20&estado=true&identificacion=1712345678`: 200, con la estructura `contenido`, `pagina`, `tamano`, `totalElementos`, `totalPaginas`.
   - `GET /clientes?sort=campoInexistente`: 400 "Parámetro inválido" (no 500).
-- [ ] T033 [P] [US2] En `TR/karate/clientes/clientes.feature`, agregar escenarios para:
+- [X] T033 [P] [US2] En `TR/karate/clientes/clientes.feature`, agregar escenarios para:
   - consultar por id (200, sin `contrasena`);
   - id inexistente (404);
   - listado paginado;
@@ -232,12 +232,12 @@ implementar.
 
 ### Implementation for User Story 2
 
-- [ ] T034 [P] [US2] Crear el record `M/shared/dto/PaginaResponse.java` `<T>` con `contenido`, `pagina`, `tamano`, `totalElementos`, `totalPaginas` y una fábrica `static <T> PaginaResponse<T> de(Page<T>)`
-- [ ] T035 [P] [US2] Crear `M/cliente/repository/ClienteSpecifications.java` con:
+- [X] T034 [P] [US2] Crear el record `M/shared/dto/PaginaResponse.java` `<T>` con `contenido`, `pagina`, `tamano`, `totalElementos`, `totalPaginas` y una fábrica `static <T> PaginaResponse<T> de(Page<T>)`
+- [X] T035 [P] [US2] Crear `M/cliente/repository/ClienteSpecifications.java` con:
   - `noEliminado()`, que se aplica siempre;
   - `conEstado(Boolean)` y `conIdentificacion(String)`, que devuelven `null` si el parámetro es `null` (filtro opcional).
-- [ ] T036 [US2] Agregar `obtener(UUID)` y `listar(Boolean estado, String identificacion, Pageable)` a `M/cliente/service/ClienteService.java` y a `ClienteServiceImpl.java` (`@Transactional(readOnly = true)`)
-- [ ] T037 [US2] Agregar a `M/cliente/controller/ClienteController.java`:
+- [X] T036 [US2] Agregar `obtener(UUID)` y `listar(Boolean estado, String identificacion, Pageable)` a `M/cliente/service/ClienteService.java` y a `ClienteServiceImpl.java` (`@Transactional(readOnly = true)`)
+- [X] T037 [US2] Agregar a `M/cliente/controller/ClienteController.java`:
   - `GET /{clienteId}`;
   - `GET` de listado con `@PageableDefault(size = 20, sort = "nombre")` y `@RequestParam(required = false)` para `estado` e `identificacion`.
 
