@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: ms-cuentas API
+  version: 1.0.0
+  description: >
+    Cuentas, movimientos y reporte de estado de cuenta. Montos con 2 decimales.
+    Errores en RFC 7807 (application/problem+json). Campos desconocidos producen 400.
+servers:
+  - url: http://localhost:8082/api
+paths:
+  /cuentas:
+    post:
+      summary: Abrir una cuenta
+      operationId: crearCuenta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CuentaCreateRequest' }
+      responses:
+        '201':
+          description: Cuenta creada
+          headers:
+            Location: { schema: { type: string, example: /api/cuentas/478758 } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CuentaResponse' }
+        '400': { $ref: '#/components/responses/Problema' }
+        '409': { $ref: '#/components/responses/Problema' }
+        '422': { $ref: '#/components/responses/Problema' }
+    get:
+      summary: Listar cuentas (paginado, filtro opcional por cliente)
+      operationId: listarCuentas
+      parameters:
+        - { name: clienteId, in: query, schema: { type: string, format: uuid } }
+        - { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { name: sort, in: query, schema: { type: string, example: 'numeroCuenta,asc' } }
+      responses:
+        '200':
+          description: Página de cuentas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaCuentaResponse' }
+        '400': { $ref: '#/components/responses/Problema' }
+  /cuentas/{numeroCuenta}:
+    parameters:
+      - { name: numeroCuenta, in: path, required: true, schema: { type: string, pattern: '^[0-9]{6,20}$' } }
+    get:
+      summary: Consultar una cuenta
+      operationId: obtenerCuenta
+      responses:
+        '200':
+          description: Cuenta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CuentaResponse' }
+        '404': { $ref: '#/components/responses/Problema' }
+    put:
+      summary: Actualizar tipo y estado de una cuenta
+      operationId: actualizarCuenta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CuentaUpdateRequest' }
+      responses:
+        '200':
+          description: Cuenta actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CuentaResponse' }
+        '400': { $ref: '#/components/responses/Problema' }
+        '404': { $ref: '#/components/responses/Problema' }
+        '422': { $ref: '#/components/responses/Problema' }
+    patch:
+      summary: Actualizar parcialmente tipo o estado de una cuenta
+      operationId: actualizarParcialCuenta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CuentaPatchRequest' }
+      responses:
+        '200':
+          description: Cuenta actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CuentaResponse' }
+        '400': { $ref: '#/components/responses/Problema' }
+        '404': { $ref: '#/components/responses/Problema' }
+        '422': { $ref: '#/components/responses/Problema' }
+
+  /movimientos:
+    post:
+      summary: Registrar un movimiento (positivo = depósito, negativo = retiro)
+      operationId: registrarMovimiento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MovimientoCreateRequest' }
+      responses:
+        '201':
+          description: Movimiento registrado
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MovimientoResponse' }
+        '400': { $ref: '#/components/responses/Problema' }
+        '404': { $ref: '#/components/responses/Problema' }
+        '422':
+          description: Saldo no disponible, cuenta inactiva o cliente no disponible
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+              example:
+                title: Saldo no disponible
+                status: 422
+                detail: Saldo no disponible
+                instance: /api/movimientos
+    get:
+      summary: Listar movimientos por cliente, cuenta y/o rango de fechas (paginado, filtros combinables)
+      operationId: listarMovimientos
+      parameters:
+        - { name: cliente, in: query, description: clienteId (caso de uso 5), schema: { type: string, format: uuid } }
+        - { name: numeroCuenta, in: query, schema: { type: string } }
+        - { name: fecha, in: query, description: 'Rango AAAA-MM-DD,AAAA-MM-DD', schema: { type: string, example: '2022-02-01,2022-02-10' } }
+        - { name: page, in: query, schema: { type: integer, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        '200':
+          description: Página de movimientos (orden por fecha descendente)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaMovimientoResponse' }
+        '400': { $ref: '#/components/responses/Problema' }
+  /movimientos/{movimientoId}:
+    parameters:
+      - { name: movimientoId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Consultar un movimiento
+      operationId: obtenerMovimiento
+      responses:
+        '200':
+          description: Movimiento
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MovimientoResponse' }
+        '404': { $ref: '#/components/responses/Problema' }
+    put:
+      summary: Corregir el valor de un movimiento (recalcula los saldos posteriores)
+      operationId: corregirMovimiento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MovimientoUpdateRequest' }
+      responses:
+        '200':
+          description: Movimiento corregido
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MovimientoResponse' }
+        '400': { $ref: '#/components/responses/Problema' }
+        '404': { $ref: '#/components/responses/Problema' }
+        '422': { $ref: '#/components/responses/Problema' }
+    patch:
+      summary: Corregir parcialmente un movimiento (único campo editable: valor)
+      operationId: corregirParcialMovimiento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MovimientoPatchRequest' }
+      responses:
+        '200':
+          description: Movimiento corregido
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MovimientoResponse' }
+        '400': { $ref: '#/components/responses/Problema' }
+        '404': { $ref: '#/components/responses/Problema' }
+        '422': { $ref: '#/components/responses/Problema' }
+
+  /reportes:
+    get:
+      summary: Estado de cuenta de un cliente en un rango de fechas
+      operationId: generarReporte
+      parameters:
+        - name: fecha
+          in: query
+          required: true
+          description: Fechas de inicio y fin (ISO, ambas incluidas) separadas por coma; máximo 1 año
+          schema: { type: string, example: '2022-02-01,2022-02-10' }
+        - name: cliente
+          in: query
+          required: true
+          description: clienteId del cliente
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Estado de cuenta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReporteResponse' }
+        '400': { $ref: '#/components/responses/Problema' }
+        '404': { $ref: '#/components/responses/Problema' }
+
+components:
+  schemas:
+    TipoCuenta: { type: string, enum: [AHORROS, CORRIENTE] }
+    TipoMovimiento: { type: string, enum: [DEPOSITO, RETIRO] }
+    Monto: { type: number, multipleOf: 0.01, example: 2000.00 }
+    CuentaCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [numeroCuenta, tipo, saldoInicial, clienteId]
+      properties:
+        numeroCuenta: { type: string, pattern: '^[0-9]{6,20}$', example: '478758' }
+        tipo: { $ref: '#/components/schemas/TipoCuenta' }
+        saldoInicial: { type: number, minimum: 0, multipleOf: 0.01, example: 2000 }
+        estado: { type: boolean, default: true }
+        clienteId: { type: string, format: uuid }
+    CuentaUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [tipo, estado]
+      properties:
+        tipo: { $ref: '#/components/schemas/TipoCuenta' }
+        estado: { type: boolean }
+    CuentaPatchRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        tipo: { $ref: '#/components/schemas/TipoCuenta' }
+        estado: { type: boolean }
+    CuentaResponse:
+      type: object
+      properties:
+        numeroCuenta: { type: string, example: '478758' }
+        tipo: { $ref: '#/components/schemas/TipoCuenta' }
+        saldoInicial: { $ref: '#/components/schemas/Monto' }
+        saldoDisponible: { $ref: '#/components/schemas/Monto' }
+        estado: { type: boolean }
+        clienteId: { type: string, format: uuid }
+        nombreCliente: { type: string, example: Jose Lema }
+    MovimientoCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [numeroCuenta, valor]
+      properties:
+        numeroCuenta: { type: string, example: '478758' }
+        valor: { type: number, multipleOf: 0.01, not: { enum: [0] }, example: -575 }
+    MovimientoUpdateRequest:
+      type: object
+      additionalProperties: false
+      required: [valor]
+      properties:
+        valor: { type: number, multipleOf: 0.01, example: -500 }
+    MovimientoPatchRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        valor: { type: number, multipleOf: 0.01 }
+    MovimientoResponse:
+      type: object
+      description: Fila plana como el ejemplo del caso de uso 5 del enunciado.
+      properties:
+        movimientoId: { type: string, format: uuid }
+        fecha: { type: string, format: date-time }
+        clienteId: { type: string, format: uuid }
+        nombreCliente: { type: string, example: Marianela Montalvo }
+        numeroCuenta: { type: string, example: '225487' }
+        tipoCuenta: { $ref: '#/components/schemas/TipoCuenta' }
+        saldoInicial: { $ref: '#/components/schemas/Monto' }
+        estadoCuenta: { type: boolean }
+        tipo: { $ref: '#/components/schemas/TipoMovimiento' }
+        valor: { $ref: '#/components/schemas/Monto' }
+        saldo: { $ref: '#/components/schemas/Monto' }
+    PaginaCuentaResponse:
+      type: object
+      properties:
+        contenido: { type: array, items: { $ref: '#/components/schemas/CuentaResponse' } }
+        pagina: { type: integer }
+        tamano: { type: integer }
+        totalElementos: { type: integer, format: int64 }
+        totalPaginas: { type: integer }
+    PaginaMovimientoResponse:
+      type: object
+      properties:
+        contenido: { type: array, items: { $ref: '#/components/schemas/MovimientoResponse' } }
+        pagina: { type: integer }
+        tamano: { type: integer }
+        totalElementos: { type: integer, format: int64 }
+        totalPaginas: { type: integer }
+    ReporteResponse:
+      type: object
+      properties:
+        cliente:
+          type: object
+          properties:
+            clienteId: { type: string, format: uuid }
+            nombre: { type: string, example: Marianela Montalvo }
+        fechaInicio: { type: string, format: date, example: '2022-02-01' }
+        fechaFin: { type: string, format: date, example: '2022-02-10' }
+        cuentas:
+          type: array
+          items:
+            type: object
+            properties:
+              numeroCuenta: { type: string, example: '225487' }
+              tipo: { $ref: '#/components/schemas/TipoCuenta' }
+              saldoInicial: { $ref: '#/components/schemas/Monto' }
+              saldoDisponible: { $ref: '#/components/schemas/Monto' }
+              estado: { type: boolean }
+              movimientos:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    movimientoId: { type: string, format: uuid }
+                    fecha: { type: string, format: date-time }
+                    tipo: { $ref: '#/components/schemas/TipoMovimiento' }
+                    valor: { $ref: '#/components/schemas/Monto' }
+                    saldo: { $ref: '#/components/schemas/Monto' }
+      example:
+        cliente: { clienteId: 3f1c2a9e-8b0d-4c55-9a6e-2b7f6c0d1e42, nombre: Marianela Montalvo }
+        fechaInicio: '2022-02-01'
+        fechaFin: '2022-02-10'
+        cuentas:
+          - numeroCuenta: '225487'
+            tipo: CORRIENTE
+            saldoInicial: 100.00
+            saldoDisponible: 700.00
+            estado: true
+            movimientos:
+              - { movimientoId: b7e2c1d0-5f3a-4e8b-9c21-0a6d4f8e3b17, fecha: '2022-02-10T10:15:00-05:00', tipo: DEPOSITO, valor: 600.00, saldo: 700.00 }
+          - numeroCuenta: '496825'
+            tipo: AHORROS
+            saldoInicial: 540.00
+            saldoDisponible: 0.00
+            estado: true
+            movimientos:
+              - { movimientoId: 0c1d2e3f-4a5b-6c7d-8e9f-0a1b2c3d4e5f, fecha: '2022-02-08T09:00:00-05:00', tipo: RETIRO, valor: -540.00, saldo: 0.00 }
+    ProblemDetail:
+      type: object
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        errores: { type: object, additionalProperties: { type: string } }
+  responses:
+    Problema:
+      description: Error (400 datos/parámetro inválido, 404 no encontrado, 409 número de cuenta duplicado, 422 regla de negocio)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
