@@ -93,7 +93,11 @@ public class Cuenta {
         return new Cuenta(numeroCuenta, tipo, monto(saldoInicial, "saldo inicial"), estado, cliente);
     }
 
+    /** Reactivar exige un cliente activo; activar una cuenta ya activa no cambia nada. */
     public void activar() {
+        if (estado) {
+            return;
+        }
         verificarClienteActivo();
         this.estado = true;
     }

@@ -200,12 +200,12 @@ duplicado sin efecto, la eliminación que desactiva cuentas y un JSON inválido 
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T024 [P] [US2] Crear `T/cuenta/service/CuentaServiceImplTest.java` (Mockito):
+- [X] T024 [P] [US2] Crear `T/cuenta/service/CuentaServiceImplTest.java` (Mockito):
   - **crear**: correcto; número duplicado → `NumeroCuentaDuplicadoException`; cliente inexistente o inactivo → `ClienteNoDisponibleException`.
   - **obtener**: 404 si no existe.
   - **listar** con filtro de cliente.
   - **actualizar / actualizarParcial**: cambian el tipo y el estado; activar con el cliente inactivo → `ClienteNoDisponibleException`.
-- [ ] T025 [P] [US2] Crear `T/cuenta/controller/CuentaControllerTest.java` (`@WebMvcTest`):
+- [X] T025 [P] [US2] Crear `T/cuenta/controller/CuentaControllerTest.java` (`@WebMvcTest`):
   - **POST**: 201 con `Location: /cuentas/{numeroCuenta}`.
   - **POST inválido** → 400:
     - número `"12ab"`;
@@ -217,7 +217,7 @@ duplicado sin efecto, la eliminación que desactiva cuentas y un JSON inválido 
   - **PUT**: 200, y 400 si falta `estado`.
   - **PATCH**: `{}` da 400 y `{"estado": false}` da 200.
   - **DELETE** `/cuentas/{numeroCuenta}`: 405, porque las cuentas no se eliminan (FR-012).
-- [ ] T026 [P] [US2] Crear el runner `T/karate/CuentasKarateTest.java`:
+- [X] T026 [P] [US2] Crear el runner `T/karate/CuentasKarateTest.java`:
   - `@SpringBootTest(RANDOM_PORT)` con `TestcontainersConfig`.
   - Siembra con `ClientesDePrueba` y pasa los `clienteId` como propiedades del sistema de Karate.
   - Ejecuta `classpath:karate/cuentas`.
@@ -233,10 +233,10 @@ duplicado sin efecto, la eliminación que desactiva cuentas y un JSON inválido 
 
 ### Implementation for User Story 2
 
-- [ ] T027 [P] [US2] Crear las excepciones de cuenta:
+- [X] T027 [P] [US2] Crear las excepciones de cuenta:
   - `M/cuenta/exception/CuentaNoEncontradaException.java` (`RecursoNoEncontradoException`, título "Cuenta no encontrada").
   - `M/cuenta/exception/NumeroCuentaDuplicadoException.java` (`ConflictoException`, título "Número de cuenta duplicado").
-- [ ] T028 [P] [US2] Crear los DTOs en `M/cuenta/dto/`:
+- [X] T028 [P] [US2] Crear los DTOs en `M/cuenta/dto/`:
   - `CuentaCreateRequest`:
 
     | Campo | Restricciones |
@@ -249,9 +249,9 @@ duplicado sin efecto, la eliminación que desactiva cuentas y un JSON inválido 
   - `CuentaUpdateRequest`: `tipo` y `estado`, ambos `@NotNull`.
   - `CuentaPatchRequest`: anotado con `@AlMenosUnCampo`, campos `tipo` y `estado`.
   - `CuentaResponse`: `numeroCuenta`, `tipo`, `saldoInicial`, `saldoDisponible`, `estado`, `clienteId` y `nombreCliente`.
-- [ ] T029 [P] [US2] Crear `M/cuenta/mapper/CuentaMapper.java` (MapStruct: `cliente.clienteId` → `clienteId`, `cliente.nombre` → `nombreCliente`) y `M/cuenta/repository/CuentaSpecifications.java` (`deCliente(UUID)` opcional)
-- [ ] T030 [US2] Crear la interfaz `M/cuenta/service/CuentaService.java` y `CuentaServiceImpl.java` con `crear`, `obtener`, `listar(clienteId, pageable)`, `actualizar` y `actualizarParcial`; el service usa los métodos de dominio de `Cuenta`
-- [ ] T031 [US2] Crear `M/cuenta/controller/CuentaController.java` en `/cuentas`:
+- [X] T029 [P] [US2] Crear `M/cuenta/mapper/CuentaMapper.java` (MapStruct: `cliente.clienteId` → `clienteId`, `cliente.nombre` → `nombreCliente`) y `M/cuenta/repository/CuentaSpecifications.java` (`deCliente(UUID)` opcional)
+- [X] T030 [US2] Crear la interfaz `M/cuenta/service/CuentaService.java` y `CuentaServiceImpl.java` con `crear`, `obtener`, `listar(clienteId, pageable)`, `actualizar` y `actualizarParcial`; el service usa los métodos de dominio de `Cuenta`
+- [X] T031 [US2] Crear `M/cuenta/controller/CuentaController.java` en `/cuentas`:
   - `POST`: 201 con `Location`.
   - `GET /{numeroCuenta}`.
   - `GET` de listado con `clienteId` opcional y `@PageableDefault(size=20, sort="numeroCuenta")`.
