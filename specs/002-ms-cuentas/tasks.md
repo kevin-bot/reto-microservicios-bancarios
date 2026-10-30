@@ -33,12 +33,12 @@ el resto, las pruebas de cada historia se escriben primero y deben fallar antes 
 
 **Purpose**: Inicializar el proyecto Maven con el mismo stack que ms-clientes.
 
-- [ ] T001 Crear el proyecto `ms-cuentas/`:
+- [X] T001 Crear el proyecto `ms-cuentas/`:
   - `pom.xml` con groupId `com.banco`, artifactId `ms-cuentas`, parent Spring Boot **3.5.16** y Java 21.
   - Las mismas dependencias y `annotationProcessorPaths` que `ms-clientes/pom.xml`.
   - Además, `org.awaitility:awaitility` en scope test (versión gestionada por Boot).
   - Maven Wrapper (Maven 3.9.11) y `M/MsCuentasApplication.java` con `@ConfigurationPropertiesScan`.
-- [ ] T002 Crear `R/application.yml`:
+- [X] T002 Crear `R/application.yml`:
   - **Servidor**: `server.port=8082`, `server.servlet.context-path=/api`.
   - **Datasource** por variables de entorno con defaults locales (`DB_URL=jdbc:postgresql://localhost:5433/cuentas_db`, `DB_USER=cuentas_user`, `DB_PASSWORD=cuentas_pass`).
   - **JPA**: `ddl-auto=validate`, `open-in-view=false`, Flyway habilitado.
@@ -60,12 +60,12 @@ que usan todas las historias.
 
 ### Base transversal
 
-- [ ] T003 [P] Crear las excepciones base en `M/shared/exception/`:
+- [X] T003 [P] Crear las excepciones base en `M/shared/exception/`:
   - `ReglaNegocioException` (abstracta, constructor `(titulo, mensaje)` y `getTitulo()`).
   - `DomainValidationException` (extiende `ReglaNegocioException`, con título "Datos inválidos").
   - `RecursoNoEncontradoException` (abstracta, con título).
   - `ConflictoException` (abstracta, con título).
-- [ ] T004 Crear `R/db/migration/V1__crear_tablas_cuentas.sql` exactamente según data-model.md:
+- [X] T004 Crear `R/db/migration/V1__crear_tablas_cuentas.sql` exactamente según data-model.md:
   - **Tablas**: `cliente_ref`, `cuenta`, `movimiento` y `evento_procesado`.
   - **Restricciones nombradas**:
     - `uk_cuenta_numero`;
@@ -76,7 +76,7 @@ que usan todas las historias.
     - `CHECK (saldo >= 0)`.
   - **Montos**: `NUMERIC(15,2)`.
   - **Índices**: `idx_cuenta_cliente` e `idx_movimiento_cuenta_fecha (cuenta_id, fecha, id)`.
-- [ ] T005 [P] Crear `M/shared/exception/GlobalExceptionHandler.java` (`@RestControllerAdvice` sobre `ResponseEntityExceptionHandler`, ProblemDetail), siguiendo el de ms-clientes:
+- [X] T005 [P] Crear `M/shared/exception/GlobalExceptionHandler.java` (`@RestControllerAdvice` sobre `ResponseEntityExceptionHandler`, ProblemDetail), siguiendo el de ms-clientes:
 
   | Excepción | HTTP | `title` |
   |---|---|---|
@@ -91,16 +91,16 @@ que usan todas las historias.
   | `DataIntegrityViolationException` con `uk_cuenta_numero` | 409 | "Número de cuenta duplicado" |
   | `DataIntegrityViolationException` con `ck_cuenta_saldo` | 422 | "Saldo no disponible", detail "Saldo no disponible" |
   | Cualquier otra | 500 | "Error interno", sin detalle (con `log.error`) |
-- [ ] T006 [P] Crear `M/shared/dto/PaginaResponse.java`, igual que en ms-clientes
-- [ ] T007 [P] Crear `M/shared/validation/AlMenosUnCampo.java` y su validator, igual que en ms-clientes, más `T/shared/validation/AlMenosUnCampoValidatorTest.java`
-- [ ] T008 [P] Configuración de tiempo y documentación:
+- [X] T006 [P] Crear `M/shared/dto/PaginaResponse.java`, igual que en ms-clientes
+- [X] T007 [P] Crear `M/shared/validation/AlMenosUnCampo.java` y su validator, igual que en ms-clientes, más `T/shared/validation/AlMenosUnCampoValidatorTest.java`
+- [X] T008 [P] Configuración de tiempo y documentación:
   - `M/shared/config/BancoProperties.java`: `@ConfigurationProperties("banco")`, `ZoneId zonaHoraria`.
   - `M/shared/config/TiempoConfig.java`: bean `Clock` = `Clock.system(zonaHoraria)`; las pruebas lo reemplazan.
   - `M/shared/config/OpenApiConfig.java`: título "ms-cuentas API".
 
 ### Rango de fechas (compartido por el listado y el reporte)
 
-- [ ] T009 **(TDD: escribir primero y verificar que falla)** Crear `T/shared/fecha/RangoFechasTest.java`:
+- [X] T009 **(TDD: escribir primero y verificar que falla)** Crear `T/shared/fecha/RangoFechasTest.java`:
   - **Acepta**: `"2022-02-01,2022-02-10"` e inicio igual a fin.
   - **Rechaza** con `IllegalArgumentException`:
     - sin coma;
@@ -109,30 +109,30 @@ que usan todas las historias.
     - `inicio > fin`;
     - más de 366 días.
   - **Convierte a instantes**: `desde(zona)` = inicio 00:00 y `hasta(zona)` = (fin + 1 día) 00:00 en la zona dada.
-- [ ] T010 Crear `M/shared/fecha/RangoFechas.java` (record con `static parse(String)`, `desde(ZoneId)`, `hasta(ZoneId)`), `M/shared/fecha/RangoFechasConverter.java` (`Converter<String, RangoFechas>`) y `M/shared/config/WebConfig.java`, que registra el converter
+- [X] T010 Crear `M/shared/fecha/RangoFechas.java` (record con `static parse(String)`, `desde(ZoneId)`, `hasta(ZoneId)`), `M/shared/fecha/RangoFechasConverter.java` (`Converter<String, RangoFechas>`) (como `@Component`: Spring Boot registra automáticamente los beans `Converter` en MVC, así que no hace falta `WebConfig`)
 
 ### Réplica de clientes y Cuenta básica (usadas por todas las historias)
 
-- [ ] T011 [P] **(TDD)** Crear `T/clienteref/entity/ClienteRefTest.java`:
+- [X] T011 [P] **(TDD)** Crear `T/clienteref/entity/ClienteRefTest.java`:
   - `ClienteRef.crear(clienteId, nombre, estado, fechaOcurrencia)`.
   - `aplicar(...)` con una fecha posterior actualiza nombre, estado y `ultimaActualizacion`, y devuelve `true`.
   - Con una fecha igual o anterior no cambia nada y devuelve `false`.
   - `estaActivo()`.
-- [ ] T012 Crear `M/clienteref/entity/ClienteRef.java` hasta que `ClienteRefTest` pase:
+- [X] T012 Crear `M/clienteref/entity/ClienteRef.java` hasta que `ClienteRefTest` pase:
   - `@Table(name="cliente_ref")`, PK `clienteId`.
   - Lombok: solo `@Getter` y `@NoArgsConstructor(access = PROTECTED)`; **prohibidos `@Data`, `@Setter` y `@EqualsAndHashCode`**.
   - Repositorio `M/clienteref/repository/ClienteRefRepository.java`.
-- [ ] T013 **(TDD: escribir primero)** Crear `T/cuenta/entity/CuentaTest.java`, nested "Apertura y estado":
+- [X] T013 **(TDD: escribir primero)** Crear `T/cuenta/entity/CuentaTest.java`, nested "Apertura y estado":
   - `abrir` con datos válidos: saldo disponible = saldo inicial.
   - `abrir` lanza `DomainValidationException` si el número no cumple `^[0-9]{6,20}$`, el saldo inicial es negativo o tiene 3 decimales, o el tipo es nulo.
   - `abrir` con un cliente inactivo lanza `ClienteNoDisponibleException`.
   - `desactivar` y `activar` funcionan; `activar` con el cliente inactivo lanza `ClienteNoDisponibleException`.
   - `cambiarTipo`.
-- [ ] T014 Crear el modelo de Cuenta hasta que el nested de T013 pase:
+- [X] T014 Crear el modelo de Cuenta hasta que el nested de T013 pase:
   - `M/cuenta/entity/TipoCuenta.java` (`AHORROS`, `CORRIENTE`).
   - `M/cuenta/exception/ClienteNoDisponibleException.java` (422, título y detalle "Cliente no disponible").
   - `M/cuenta/entity/Cuenta.java`: `@ManyToOne(fetch = LAZY)` a `ClienteRef`; métodos `abrir`, `activar`, `desactivar`, `cambiarTipo`; mismas restricciones de Lombok.
-- [ ] T015 Crear `M/cuenta/repository/CuentaRepository.java` (`JpaRepository<Cuenta, Long>` y `JpaSpecificationExecutor`) con:
+- [X] T015 Crear `M/cuenta/repository/CuentaRepository.java` (`JpaRepository<Cuenta, Long>` y `JpaSpecificationExecutor`) con:
   - `findByNumeroCuenta(String)`;
   - `buscarParaActualizar(String)` con `@Lock(PESSIMISTIC_WRITE)` y `@Query`;
   - `existsByNumeroCuenta(String)`;
@@ -140,7 +140,7 @@ que usan todas las historias.
 
 ### Soporte de pruebas
 
-- [ ] T016 [P] Crear `T/support/TestcontainersConfig.java`, igual que en ms-clientes, y `T/support/ClientesDePrueba.java`:
+- [X] T016 [P] Crear `T/support/TestcontainersConfig.java`, igual que en ms-clientes, y `T/support/ClientesDePrueba.java`:
   - Inserta con `ClienteRefRepository` a Jose Lema, Marianela Montalvo, Juan Osorio y "Cliente Pruebas", con `clienteId` fijos (constantes públicas).
   - Es **idempotente**: solo inserta si `!existsById`, porque las pruebas que comparten contexto de Spring comparten la base.
   - Así las historias US2–US4 no dependen del consumidor de eventos (US1).
