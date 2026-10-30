@@ -352,6 +352,48 @@ class ClienteServiceImplTest {
         }
     }
 
+    @Nested
+    @DisplayName("eliminar")
+    class Eliminar {
+
+        @Test
+        @DisplayName("Marca el cliente como eliminado y publica CLIENTE_ELIMINADO con estado false")
+        void eliminar_cuandoClienteExiste_debeEliminarLogicamenteYPublicarEvento() {
+            // Given
+            Cliente cliente = clienteExistente();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(cliente.getClienteId()))
+                    .thenReturn(Optional.of(cliente));
+            when(clienteRepository.save(cliente)).thenReturn(cliente);
+
+            // When
+            clienteService.eliminar(cliente.getClienteId());
+
+            // Then
+            assertThat(cliente.estaEliminado()).isTrue();
+            assertThat(cliente.isEstado()).isFalse();
+            verify(clienteRepository).save(cliente);
+            verify(clienteRepository, never()).delete(any(Cliente.class));
+
+            ArgumentCaptor<ClienteEventoDominio> evento = ArgumentCaptor.forClass(ClienteEventoDominio.class);
+            verify(eventPublisher).publishEvent(evento.capture());
+            assertThat(evento.getValue().evento().tipo()).isEqualTo(TipoEventoCliente.CLIENTE_ELIMINADO);
+            assertThat(evento.getValue().evento().estado()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Lanza ClienteNoEncontradoException si no existe o ya fue eliminado")
+        void eliminar_cuandoClienteNoExiste_debeLanzarClienteNoEncontrado() {
+            // Given
+            UUID clienteId = UUID.randomUUID();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(clienteId)).thenReturn(Optional.empty());
+
+            // When / Then
+            assertThatThrownBy(() -> clienteService.eliminar(clienteId))
+                    .isInstanceOf(ClienteNoEncontradoException.class);
+            verify(eventPublisher, never()).publishEvent(any());
+        }
+    }
+
     private void verificarEventoPublicado(TipoEventoCliente tipo) {
         ArgumentCaptor<ClienteEventoDominio> evento = ArgumentCaptor.forClass(ClienteEventoDominio.class);
         verify(eventPublisher).publishEvent(evento.capture());

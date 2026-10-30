@@ -104,6 +104,16 @@ public class ClienteServiceImpl implements ClienteService {
         return guardarActualizacion(cliente);
     }
 
+    @Override
+    @Transactional
+    public void eliminar(UUID clienteId) {
+        Cliente cliente = buscarVigente(clienteId);
+        cliente.eliminar();
+        Cliente guardado = clienteRepository.save(cliente);
+        publicarEvento(guardado, TipoEventoCliente.CLIENTE_ELIMINADO);
+        log.info("Cliente eliminado lógicamente (clienteId={})", guardado.getClienteId());
+    }
+
     private ClienteResponse guardarActualizacion(Cliente cliente) {
         Cliente guardado = clienteRepository.save(cliente);
         publicarEvento(guardado, TipoEventoCliente.CLIENTE_ACTUALIZADO);

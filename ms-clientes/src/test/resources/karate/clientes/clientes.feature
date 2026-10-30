@@ -170,6 +170,50 @@ Feature: API de clientes (ms-clientes)
     Then status 400
     And match response.title == 'Solicitud mal formada'
 
+  Scenario: Eliminación lógica de un cliente
+    * def identificacion = identificacionUnica()
+    * def cliente = { nombre: 'Cliente Eliminable', genero: 'MASCULINO', edad: 60, identificacion: '#(identificacion)', direccion: 'Ibarra', telefono: '0987778899', contrasena: 'clave1' }
+    Given path 'clientes'
+    And request cliente
+    When method post
+    Then status 201
+    * def clienteId = response.clienteId
+
+    Given path 'clientes', clienteId
+    When method delete
+    Then status 204
+
+    Given path 'clientes', clienteId
+    When method get
+    Then status 404
+
+    Given path 'clientes', clienteId
+    And request { direccion: 'Otra' }
+    When method patch
+    Then status 404
+
+    Given path 'clientes', clienteId
+    And request { nombre: 'X Y', genero: 'OTRO', edad: 30, identificacion: '#(identificacion)', direccion: 'Otra', telefono: '0987778899', estado: true }
+    When method put
+    Then status 404
+
+    Given path 'clientes', clienteId
+    When method delete
+    Then status 404
+
+    # La identificación de un cliente eliminado sigue reservada
+    Given path 'clientes'
+    And request cliente
+    When method post
+    Then status 409
+
+    # Ya no aparece en el listado
+    Given path 'clientes'
+    And param identificacion = identificacion
+    When method get
+    Then status 200
+    And match response.totalElementos == 0
+
   Scenario: Ordenar por un campo inexistente responde 400
     Given path 'clientes'
     And param sort = 'campoInexistente'

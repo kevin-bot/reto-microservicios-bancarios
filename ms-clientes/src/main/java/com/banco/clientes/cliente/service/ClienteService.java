@@ -20,4 +20,7 @@ public interface ClienteService {
     ClienteResponse actualizar(UUID clienteId, ClienteUpdateRequest request);
 
     ClienteResponse actualizarParcial(UUID clienteId, ClientePatchRequest request);
+
+    /** Eliminación lógica: la fila se conserva y su identificación queda reservada. */
+    void eliminar(UUID clienteId);
 }

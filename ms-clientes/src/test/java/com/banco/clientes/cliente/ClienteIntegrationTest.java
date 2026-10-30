@@ -21,9 +21,12 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -137,5 +140,40 @@ class ClienteIntegrationTest {
 
         // Then
         assertThat(rabbitTemplate.receive(COLA_PRUEBA, ESPERA_SIN_EVENTO_MS)).isNull();
+    }
+
+    @Test
+    @DisplayName("Ciclo completo: crear, actualizar y eliminar publican 3 eventos y la fila queda con eliminado=true")
+    void cicloCompleto_cuandoCrearActualizarEliminar_debePublicarTresEventosYConservarFila() throws Exception {
+        // Given
+        String identificacion = identificacionUnica();
+        String clienteId = crearCliente(identificacion).get("clienteId").asText();
+
+        // When
+        mockMvc.perform(patch("/clientes/{clienteId}", clienteId)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"direccion\": \"Av. 6 de Diciembre\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(delete("/clientes/{clienteId}", clienteId))
+                .andExpect(status().isNoContent());
+
+        // Then: exactamente 3 eventos, en orden, con eventId distintos
+        JsonNode creado = recibirEvento();
+        JsonNode actualizado = recibirEvento();
+        JsonNode eliminado = recibirEvento();
+        assertThat(List.of(creado, actualizado, eliminado))
+                .extracting(evento -> evento.get("tipo").asText())
+                .containsExactly("CLIENTE_CREADO", "CLIENTE_ACTUALIZADO", "CLIENTE_ELIMINADO");
+        assertThat(List.of(creado, actualizado, eliminado))
+                .extracting(evento -> evento.get("eventId").asText())
+                .doesNotHaveDuplicates();
+        assertThat(List.of(creado, actualizado, eliminado))
+                .allSatisfy(evento -> assertThat(evento.get("clienteId").asText()).isEqualTo(clienteId));
+        assertThat(eliminado.get("estado").asBoolean()).isFalse();
+        assertThat(rabbitTemplate.receive(COLA_PRUEBA, ESPERA_SIN_EVENTO_MS)).isNull();
+
+        // Then: la fila se conserva (eliminación lógica)
+        Boolean marcadoEliminado = jdbcTemplate.queryForObject(
+                "SELECT eliminado FROM cliente WHERE cliente_id = ?", Boolean.class, UUID.fromString(clienteId));
+        assertThat(marcadoEliminado).isTrue();
     }
 }

@@ -307,18 +307,18 @@ implementar.
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T047 [P] [US4] En `T/cliente/service/ClienteServiceImplTest.java`, agregar pruebas de `eliminar`:
+- [X] T047 [P] [US4] En `T/cliente/service/ClienteServiceImplTest.java`, agregar pruebas de `eliminar`:
   - invoca `cliente.eliminar()`;
   - publica `CLIENTE_ELIMINADO` con `estado=false`;
   - si el cliente no existe, lanza `ClienteNoEncontradoException`.
-- [ ] T048 [P] [US4] En `T/cliente/controller/ClienteControllerTest.java`, agregar pruebas de `DELETE /clientes/{id}`: 204 y 404
-- [ ] T049 [P] [US4] En `TR/karate/clientes/clientes.feature`, agregar el escenario "Eliminación lógica": DELETE (204), GET (404), PATCH (404), PUT (404), DELETE (404), POST con la misma identificación (409) y el listado ya no lo incluye (FR-012a)
-- [ ] T050 [P] [US4] En `T/cliente/ClienteIntegrationTest.java`, agregar el ciclo completo: crear, PATCH y DELETE publican exactamente 3 mensajes (`CLIENTE_CREADO`, `CLIENTE_ACTUALIZADO`, `CLIENTE_ELIMINADO`) con `eventId` distintos, cada uno recibido en menos de 5 s (`receiveAndConvert(cola, 5000)`), y la fila sigue en BD con `eliminado = true`
+- [X] T048 [P] [US4] En `T/cliente/controller/ClienteControllerTest.java`, agregar pruebas de `DELETE /clientes/{id}`: 204 y 404
+- [X] T049 [P] [US4] En `TR/karate/clientes/clientes.feature`, agregar el escenario "Eliminación lógica": DELETE (204), GET (404), PATCH (404), PUT (404), DELETE (404), POST con la misma identificación (409) y el listado ya no lo incluye (FR-012a)
+- [X] T050 [P] [US4] En `T/cliente/ClienteIntegrationTest.java`, agregar el ciclo completo: crear, PATCH y DELETE publican exactamente 3 mensajes (`CLIENTE_CREADO`, `CLIENTE_ACTUALIZADO`, `CLIENTE_ELIMINADO`) con `eventId` distintos, cada uno recibido en menos de 5 s (`receiveAndConvert(cola, 5000)`), y la fila sigue en BD con `eliminado = true`
 
 ### Implementation for User Story 4
 
-- [ ] T051 [US4] Agregar `void eliminar(UUID)` a la interfaz `M/cliente/service/ClienteService.java` y a `ClienteServiceImpl.java`: busca el cliente, llama a `cliente.eliminar()` y publica `CLIENTE_ELIMINADO`
-- [ ] T052 [US4] Agregar `DELETE /{clienteId}` a `M/cliente/controller/ClienteController.java`, que responde `204 No Content`
+- [X] T051 [US4] Agregar `void eliminar(UUID)` a la interfaz `M/cliente/service/ClienteService.java` y a `ClienteServiceImpl.java`: busca el cliente, llama a `cliente.eliminar()` y publica `CLIENTE_ELIMINADO`
+- [X] T052 [US4] Agregar `DELETE /{clienteId}` a `M/cliente/controller/ClienteController.java`, que responde `204 No Content`
 
 **Checkpoint**: CRUD completo y las 4 historias verificadas.
 

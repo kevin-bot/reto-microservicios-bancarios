@@ -31,9 +31,11 @@ import static org.hamcrest.Matchers.endsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -399,6 +401,32 @@ class ClienteControllerTest {
             mockMvc.perform(patch("/clientes/{clienteId}", CLIENTE_ID)
                             .contentType(MediaType.APPLICATION_JSON).content("{\"identificacion\": \"ABC12345\"}"))
                     .andExpect(status().isConflict());
+        }
+    }
+
+    @Nested
+    @DisplayName("DELETE /clientes/{clienteId}")
+    class Eliminar {
+
+        @Test
+        @DisplayName("204 sin cuerpo cuando el cliente se elimina")
+        void eliminar_cuandoClienteExiste_debeResponder204() throws Exception {
+            mockMvc.perform(delete("/clientes/{clienteId}", CLIENTE_ID))
+                    .andExpect(status().isNoContent())
+                    .andExpect(content().string(""));
+            verify(clienteService).eliminar(CLIENTE_ID);
+        }
+
+        @Test
+        @DisplayName("404 cuando el cliente no existe o ya fue eliminado")
+        void eliminar_cuandoClienteNoExiste_debeResponder404() throws Exception {
+            // Given
+            doThrow(new ClienteNoEncontradoException(CLIENTE_ID)).when(clienteService).eliminar(CLIENTE_ID);
+
+            // When / Then
+            mockMvc.perform(delete("/clientes/{clienteId}", CLIENTE_ID))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.title").value("Cliente no encontrado"));
         }
     }
 }
