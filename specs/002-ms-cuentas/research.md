@@ -45,8 +45,11 @@ resuelven las decisiones propias de ms-cuentas.
   3. si algún saldo queda < 0 → `SaldoNoDisponibleException` **antes** de modificar nada;
   4. si todo es válido, se aplica: nuevo valor y tipo del corregido, nuevos saldos de todos y
      nuevo saldo disponible de la cuenta.
-  El service carga la cuenta con bloqueo pesimista y los movimientos posteriores en la misma
-  transacción.
+  El orden en el service es obligatorio para no recalcular sobre datos viejos de la caché de
+  Hibernate:
+  1. obtener solo el número de cuenta del movimiento (proyección, sin cargar la entidad);
+  2. bloquear la cuenta con `buscarParaActualizar`;
+  3. recién entonces cargar el movimiento y sus posteriores.
 - **Rationale**: Decisión de clarificación (corregir cualquier movimiento) manteniendo la
   invariante "saldo nunca negativo" y la atomicidad (todo o nada).
 - **Alternatives considered**: Recalcular con una sentencia SQL de ventana (`SUM() OVER`): eficiente
@@ -72,6 +75,10 @@ resuelven las decisiones propias de ms-cuentas.
   - **Reintentos**: `spring.rabbitmq.listener.simple.retry` con 4 intentos en total (1 + 3
     reintentos), espera inicial de 1 s y multiplicador 2. Con `default-requeue-rejected=false`, al
     agotarse se rechaza el mensaje y RabbitMQ lo envía a la DLQ.
+  - **Errores no reintentables**: por defecto Spring reintenta cualquier excepción, incluidos
+    los errores de conversión. Un `RabbitRetryTemplateCustomizer` (destino `LISTENER`) instala una
+    política que **no** reintenta `MessageConversionException`. Así un JSON inválido va a la DLQ
+    al primer intento, como dice el contrato.
   - **Deserialización**: `Jackson2JsonMessageConverter` con
     `setAlwaysConvertToInferredType(true)`. Se ignora la cabecera `__TypeId__` del productor (su
     clase no existe en ms-cuentas) y se convierte al record local `ClienteEventoRecibido`. Un
@@ -190,8 +197,16 @@ resuelven las decisiones propias de ms-cuentas.
       negativo (SC-002).
     - `ClienteEventoListenerIntegrationTest`: publica en `clientes.exchange` → réplica; duplicado
       sin efecto; mensaje inválido termina en la DLQ.
-  - **Karate**: `CuentasKarateTest` siembra los 3 clientes del caso de uso 1 publicando sus
-    eventos con `RabbitTemplate` y ejecuta los casos de uso 2 a 5.
+  - **Karate**: `CuentasKarateTest` siembra directamente en la réplica (`ClientesDePrueba`, vía
+    repositorio e idempotente) los 3 clientes del caso de uso 1 y un cuarto cliente
+    "Cliente Pruebas". Así las historias de cuentas, movimientos y reporte no dependen del
+    consumidor de eventos. La mensajería se prueba aparte en
+    `ClienteEventoListenerIntegrationTest`. Organización de los features:
+    - `casos-de-uso.feature`: un único escenario ordenado con los casos 2 a 5, que cada historia
+      va extendiendo, porque los escenarios de Karate no comparten estado;
+    - features de errores: usan "Cliente Pruebas" y números de cuenta aleatorios, para no alterar
+      los saldos ni las cuentas que espera el caso de uso 5;
+    - "hoy" se calcula en `America/Guayaquil`, la misma zona que `banco.zona-horaria`.
   - **Postman**: colección E2E que crea los clientes en ms-clientes y, tras una breve espera,
     ejecuta los casos 2 a 5 en ms-cuentas. Demuestra la comunicación asíncrona real.
 - **Rationale**: Principio VI; cubre las garantías propias de este servicio (concurrencia, mensajería).

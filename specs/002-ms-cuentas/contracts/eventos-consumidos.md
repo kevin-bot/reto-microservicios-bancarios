@@ -39,6 +39,8 @@ mensaje ──► ¿JSON válido? ──no──► DLQ (error fatal, sin reinte
 
 - **Error transitorio** (p. ej. la base de datos no está disponible): 4 intentos en total, con
   espera de 1 s, 2 s y 4 s; después se rechaza y el mensaje va a la DLQ.
+- **Error de conversión** (JSON inválido): no se reintenta. La política de reintentos excluye
+  `MessageConversionException` y el mensaje va a la DLQ al primer intento.
 - **Entrega**: *at-least-once* desde la cola (ack después del commit) más idempotencia por
   `eventId`, lo que da un efecto *exactly-once* sobre la réplica.
 - **Observabilidad**: cada descarte (duplicado o fuera de orden) se registra en log nivel INFO, y

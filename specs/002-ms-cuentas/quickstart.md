@@ -7,6 +7,9 @@
 
 - Java 21 y Docker Desktop encendido.
 - ms-clientes disponible (ya implementado en `001-ms-clientes`).
+- **Base limpia**: los números de cuenta del enunciado son fijos, así que antes de repetir el
+  recorrido hay que ejecutar `docker compose down -v`; si no, las cuentas responden 409.
+- `{hoy}` es la fecha actual en `America/Guayaquil` (zona del banco).
 
 ## 1. Pruebas automatizadas
 

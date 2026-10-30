@@ -182,7 +182,7 @@ rango que incluye sus movimientos y obtener sus cuentas 225487 (saldo 700, movim
 - Servicio de clientes caído → ms-cuentas sigue operando con su réplica local.
 - Petición de movimiento que incluye una fecha → se rechaza como solicitud mal formada (campo no
   permitido).
-- Reporte con un rango muy amplio → se entrega igualmente; el rango máximo permitido es de 1 año.
+- Reporte con un rango de más de 1 año → se rechaza como parámetro inválido.
 - Corrección de un movimiento con valor 0 → se rechaza como dato inválido.
 - Corrección de un movimiento de una cuenta inactiva → se rechaza indicando que la cuenta está
   inactiva.

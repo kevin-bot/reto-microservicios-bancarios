@@ -110,7 +110,7 @@ ms-cuentas/
     │   │   ├── entity/       ClienteRef, EventoProcesado
     │   │   ├── repository/   ClienteRefRepository, EventoProcesadoRepository
     │   │   ├── event/        ClienteEventoRecibido, TipoEventoCliente, ClienteEventoListener
-    │   │   └── service/      ClienteEventoProcessor
+    │   │   └── service/      ClienteEventoProcessor, ClienteEventoProcessorImpl
     │   ├── cuenta/
     │   │   ├── controller/   CuentaController
     │   │   ├── service/      CuentaService, CuentaServiceImpl
@@ -140,7 +140,7 @@ ms-cuentas/
     │       ├── validation/   AlMenosUnCampo (+ validator)
     │       ├── dto/          PaginaResponse
     │       ├── fecha/        RangoFechas, RangoFechasConverter
-    │       └── config/       RabbitConfig, WebConfig, OpenApiConfig, BancoProperties
+    │       └── config/       RabbitConfig, WebConfig, OpenApiConfig, BancoProperties, TiempoConfig
     ├── main/resources/
     │   ├── application.yml                       # port 8082, /api, retry del listener, zona horaria
     │   └── db/migration/V1__crear_tablas_cuentas.sql
@@ -149,7 +149,8 @@ ms-cuentas/
         │   ├── cuenta/entity/CuentaTest.java                      # TDD F2/F3 + corrección
         │   ├── clienteref/entity/ClienteRefTest.java
         │   ├── shared/fecha/RangoFechasTest.java
-        │   ├── clienteref/service/ClienteEventoProcessorTest.java
+        │   ├── clienteref/service/ClienteEventoProcessorImplTest.java
+        │   ├── shared/validation/AlMenosUnCampoValidatorTest.java
         │   ├── cuenta/service/CuentaServiceImplTest.java
         │   ├── movimiento/service/MovimientoServiceImplTest.java
         │   ├── reporte/service/ReporteServiceImplTest.java
@@ -158,9 +159,10 @@ ms-cuentas/
         │   ├── reporte/controller/ReporteControllerTest.java
         │   ├── movimiento/MovimientoConcurrenciaIntegrationTest.java
         │   ├── clienteref/ClienteEventoListenerIntegrationTest.java
+        │   ├── reporte/ReporteRendimientoIntegrationTest.java
         │   ├── karate/CuentasKarateTest.java
         │   └── support/TestcontainersConfig.java, ClientesDePrueba.java
-        └── resources/karate/cuentas/casos-de-uso.feature
+        └── resources/karate/cuentas/   casos-de-uso.feature, cuentas.feature, movimientos.feature, reportes.feature
 ```
 
 **Structure Decision**: Proyecto Maven independiente `ms-cuentas/`, con la misma organización
