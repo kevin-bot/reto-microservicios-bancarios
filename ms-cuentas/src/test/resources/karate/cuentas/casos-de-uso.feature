@@ -101,3 +101,23 @@ Feature: Casos de uso 2 a 5 del enunciado
     And match each response.contenido contains { nombreCliente: 'Marianela Montalvo', estadoCuenta: true }
     And match response.contenido contains deep { numeroCuenta: '225487', tipoCuenta: 'CORRIENTE', saldoInicial: 100, valor: 600, saldo: 700 }
     And match response.contenido contains deep { numeroCuenta: '496825', tipoCuenta: 'AHORROS', saldoInicial: 540, valor: -540, saldo: 0 }
+
+    # ---------- Caso de uso 5 (F4): reporte de estado de cuenta de Marianela ----------
+    Given path 'reportes'
+    And params { fecha: '#(hoy + "," + hoy)', cliente: '#(marianela)' }
+    When method get
+    Then status 200
+    And match response.cliente == { clienteId: '#(marianela)', nombre: 'Marianela Montalvo' }
+    And match response.fechaInicio == hoy
+    And match response.fechaFin == hoy
+    And match response.cuentas == '#[2]'
+
+    * def corriente = karate.filter(response.cuentas, function(c) { return c.numeroCuenta == '225487' })[0]
+    And match corriente contains { tipo: 'CORRIENTE', saldoInicial: 100, saldoDisponible: 700, estado: true }
+    And match corriente.movimientos == '#[1]'
+    And match corriente.movimientos[0] contains { tipo: 'DEPOSITO', valor: 600, saldo: 700 }
+
+    * def ahorros = karate.filter(response.cuentas, function(c) { return c.numeroCuenta == '496825' })[0]
+    And match ahorros contains { tipo: 'AHORROS', saldoInicial: 540, saldoDisponible: 0, estado: true }
+    And match ahorros.movimientos == '#[1]'
+    And match ahorros.movimientos[0] contains { tipo: 'RETIRO', valor: -540, saldo: 0 }

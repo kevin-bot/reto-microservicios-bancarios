@@ -364,29 +364,29 @@ con recálculo y listado plano por cliente, cuenta y fechas (caso de uso 5).
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T044 [P] [US4] Crear `T/reporte/service/ReporteServiceImplTest.java` (Mockito):
+- [X] T044 [P] [US4] Crear `T/reporte/service/ReporteServiceImplTest.java` (Mockito):
   - Cliente desconocido → `ClienteNoEncontradoException`.
   - Agrupa los movimientos por cuenta conservando el orden.
   - Una cuenta sin movimientos aparece con la lista vacía.
   - Usa `rango.desde(zona)` y `rango.hasta(zona)` de `BancoProperties`.
-- [ ] T045 [P] [US4] Crear `T/reporte/controller/ReporteControllerTest.java` (`@WebMvcTest`):
+- [X] T045 [P] [US4] Crear `T/reporte/controller/ReporteControllerTest.java` (`@WebMvcTest`):
   - 200 con la estructura `cliente`, `fechaInicio`, `fechaFin` y `cuentas[].movimientos[]`.
   - 400 sin `fecha` o sin `cliente`.
   - 400 con `fecha=2022-02-10,2022-02-01` o `fecha=2022-02-01`.
   - 404 si el cliente no existe.
-- [ ] T046 [US4] Pruebas Karate del reporte. "Hoy" se calcula en `America/Guayaquil`.
+- [X] T046 [US4] Pruebas Karate del reporte. "Hoy" se calcula en `America/Guayaquil`.
   - Extender el escenario de `TR/karate/cuentas/casos-de-uso.feature` con el caso 5: reporte de Marianela con 2 cuentas, saldos 700 y 0 y un movimiento en cada una.
   - Crear `TR/karate/cuentas/reportes.feature`:
     - rango invertido: 400;
     - rango de más de 1 año: 400;
     - cliente inexistente: 404.
-- [ ] T047 [P] [US4] Crear `T/reporte/ReporteRendimientoIntegrationTest.java` (Testcontainers) para SC-006: inserta 1.000 movimientos en una cuenta propia (número aleatorio, "Cliente Pruebas") y verifica que `ReporteService.generar` responde en menos de 2 s
+- [X] T047 [P] [US4] Crear `T/reporte/ReporteRendimientoIntegrationTest.java` (Testcontainers) para SC-006: inserta 1.000 movimientos en una cuenta propia (número aleatorio, "Cliente Pruebas") y verifica que `ReporteService.generar` responde en menos de 2 s
 
 ### Implementation for User Story 4
 
-- [ ] T048 [P] [US4] Crear los records en `M/reporte/dto/` (`ReporteResponse`, `ClienteResumen`, `CuentaReporte`, `MovimientoReporte`) según el contrato, y `M/reporte/exception/ClienteNoEncontradoException.java` (404, "Cliente no encontrado")
-- [ ] T049 [US4] Crear la interfaz `M/reporte/service/ReporteService.java` y `ReporteServiceImpl.java` (`@Transactional(readOnly = true)`, 3 consultas sin N+1 según research R11)
-- [ ] T050 [US4] Crear `M/reporte/controller/ReporteController.java` con `GET /reportes`, que recibe `@RequestParam RangoFechas fecha` y `@RequestParam UUID cliente`, con anotaciones de springdoc
+- [X] T048 [P] [US4] Crear los records en `M/reporte/dto/` (`ReporteResponse`, `ClienteResumen`, `CuentaReporte`, `MovimientoReporte`) según el contrato, y `M/reporte/exception/ClienteNoEncontradoException.java` (404, "Cliente no encontrado")
+- [X] T049 [US4] Crear la interfaz `M/reporte/service/ReporteService.java` y `ReporteServiceImpl.java` (`@Transactional(readOnly = true)`, 3 consultas sin N+1 según research R11)
+- [X] T050 [US4] Crear `M/reporte/controller/ReporteController.java` con `GET /reportes`, que recibe `@RequestParam RangoFechas fecha` y `@RequestParam UUID cliente`, con anotaciones de springdoc
 
 **Checkpoint**: Las 4 historias completas.
 
