@@ -272,7 +272,7 @@ con recálculo y listado plano por cliente, cuenta y fechas (caso de uso 5).
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T032 [US3] **(TDD: escribir primero y verificar que falla)** Agregar a `T/cuenta/entity/CuentaTest.java` el nested "Movimientos".
+- [X] T032 [US3] **(TDD: escribir primero y verificar que falla)** Agregar a `T/cuenta/entity/CuentaTest.java` el nested "Movimientos".
 
   `registrarMovimiento`:
   - 2000 y −575: saldo 1425, tipo `RETIRO`, el saldo resultante del movimiento es 1425.
@@ -288,12 +288,12 @@ con recálculo y listado plano por cliente, cuenta y fechas (caso de uso 5).
   - Corregir a un valor que deja un saldo intermedio negativo: `SaldoNoDisponibleException` y **ningún** valor ni saldo cambia.
   - Cambiar el signo cambia el tipo.
   - Cuenta inactiva o cliente inactivo: rechaza.
-- [ ] T033 [P] [US3] Crear `T/movimiento/service/MovimientoServiceImplTest.java` (Mockito, con un `Clock` fijo):
+- [X] T033 [P] [US3] Crear `T/movimiento/service/MovimientoServiceImplTest.java` (Mockito, con un `Clock` fijo):
   - **registrar**: usa `buscarParaActualizar`, la fecha viene del `Clock` y guarda el movimiento; cuenta inexistente → 404.
   - **obtener**: 404 si no existe.
   - **listar**: delega con los filtros.
   - **corregir**: verifica con `InOrder` la secuencia `buscarNumeroCuenta(movimientoId)` → `buscarParaActualizar(numero)` → `findByMovimientoId` + `findPosteriores`, y que delega en el dominio.
-- [ ] T034 [P] [US3] Crear `T/movimiento/controller/MovimientoControllerTest.java` (`@WebMvcTest`):
+- [X] T034 [P] [US3] Crear `T/movimiento/controller/MovimientoControllerTest.java` (`@WebMvcTest`):
   - **POST**:
     - 201;
     - 422 con `title` y `detail` "Saldo no disponible";
@@ -304,11 +304,11 @@ con recálculo y listado plano por cliente, cuenta y fechas (caso de uso 5).
   - **GET por id**: 200 y 404.
   - **GET de listado**: con `cliente`, `numeroCuenta` y `fecha` responde 200 con filas planas (`nombreCliente`, `numeroCuenta`, `tipoCuenta`, `saldoInicial`, `estadoCuenta`, `valor`, `saldo`); con `fecha=2022-02-10,2022-02-01` responde 400.
   - **PUT y PATCH**: 200, `{}` da 400 y 422 "Saldo no disponible".
-- [ ] T035 [P] [US3] Crear `T/movimiento/MovimientoConcurrenciaIntegrationTest.java` (`@SpringBootTest`, Testcontainers) para SC-002:
+- [X] T035 [P] [US3] Crear `T/movimiento/MovimientoConcurrenciaIntegrationTest.java` (`@SpringBootTest`, Testcontainers) para SC-002:
   - Cuenta propia (número aleatorio, "Cliente Pruebas") con saldo 100; 20 hilos lanzan a la vez un retiro de −10 cada uno, a través de `MovimientoService`.
   - Exactamente 10 retiros tienen éxito y 10 reciben `SaldoNoDisponibleException`.
   - El saldo final es 0; hay 10 movimientos en la BD y ningún saldo negativo.
-- [ ] T036 [US3] Pruebas Karate de movimientos. "Hoy" se calcula con `LocalDate.now(ZoneId.of('America/Guayaquil'))`.
+- [X] T036 [US3] Pruebas Karate de movimientos. "Hoy" se calcula con `LocalDate.now(ZoneId.of('America/Guayaquil'))`.
   - Extender el escenario de `TR/karate/cuentas/casos-de-uso.feature`:
     - caso 4: los 4 movimientos y sus saldos (1425, 700, 150, 0);
     - retiro de −1 sobre 496825: 422 "Saldo no disponible";
@@ -320,32 +320,32 @@ con recálculo y listado plano por cliente, cuenta y fechas (caso de uso 5).
 
 ### Implementation for User Story 3
 
-- [ ] T037 [P] [US3] Crear `M/movimiento/entity/TipoMovimiento.java` (`DEPOSITO`, `RETIRO`, con `static desde(BigDecimal valor)`) y las excepciones:
+- [X] T037 [P] [US3] Crear `M/movimiento/entity/TipoMovimiento.java` (`DEPOSITO`, `RETIRO`, con `static desde(BigDecimal valor)`) y las excepciones:
   - `M/cuenta/exception/SaldoNoDisponibleException.java` (título y mensaje "Saldo no disponible").
   - `M/cuenta/exception/CuentaInactivaException.java` (título "Cuenta inactiva").
   - `M/movimiento/exception/MovimientoNoEncontradoException.java` (404, "Movimiento no encontrado").
-- [ ] T038 [US3] Crear `M/movimiento/entity/Movimiento.java`:
+- [X] T038 [US3] Crear `M/movimiento/entity/Movimiento.java`:
   - Constructor de paquete, que solo usa `Cuenta`.
   - `movimientoId` UUID generado.
   - Métodos de paquete `corregirValor` y `actualizarSaldo`.
   - Solo `@Getter`, y `@ManyToOne(fetch = LAZY)` a `Cuenta`.
-- [ ] T039 [US3] Implementar en `M/cuenta/entity/Cuenta.java` `registrarMovimiento(valor, fecha)` y `corregirMovimiento(movimiento, nuevoValor, posteriores)` según research R4, hasta que T032 pase
-- [ ] T040 [US3] Crear `M/movimiento/repository/MovimientoRepository.java` (+ `JpaSpecificationExecutor`) y `M/movimiento/repository/MovimientoSpecifications.java`:
+- [X] T039 [US3] Implementar en `M/cuenta/entity/Cuenta.java` `registrarMovimiento(valor, fecha)` y `corregirMovimiento(movimiento, nuevoValor, posteriores)` según research R4, hasta que T032 pase
+- [X] T040 [US3] Crear `M/movimiento/repository/MovimientoRepository.java` (+ `JpaSpecificationExecutor`) y `M/movimiento/repository/MovimientoSpecifications.java`:
   - **Repositorio**: `findByMovimientoId`; `buscarNumeroCuenta(UUID movimientoId)` (proyección `@Query`, sin cargar la entidad); `findPosteriores(cuenta, fecha, id)` ordenados por `fecha, id`; `findDelReporte(List<Long> cuentaIds, Instant desde, Instant hasta)` ordenados por `fecha, id`.
   - **Specifications**: `deCliente`, `deCuenta`, `enRango`, más un `fetch join` de cuenta y cliente que se omite en la consulta de conteo (`query.getResultType() != Long.class`).
-- [ ] T041 [P] [US3] Crear los DTOs en `M/movimiento/dto/`:
+- [X] T041 [P] [US3] Crear los DTOs en `M/movimiento/dto/`:
   - `MovimientoCreateRequest`: `numeroCuenta` `@NotBlank`; `valor` `@NotNull @Digits(integer=13, fraction=2)`.
   - `MovimientoUpdateRequest`: `valor` `@NotNull`.
   - `MovimientoPatchRequest`: `@AlMenosUnCampo`, campo `valor`.
   - `MovimientoResponse`: fila plana según el contrato.
 
   Crear también `M/movimiento/mapper/MovimientoMapper.java` (MapStruct, con `@Mapping` desde `cuenta.*` y `cuenta.cliente.*`).
-- [ ] T042 [US3] Crear la interfaz `M/movimiento/service/MovimientoService.java` y `MovimientoServiceImpl.java`:
+- [X] T042 [US3] Crear la interfaz `M/movimiento/service/MovimientoService.java` y `MovimientoServiceImpl.java`:
   - `registrar` y `corregir`, ambos `@Transactional` con bloqueo pesimista; la fecha viene del `Clock`.
   - `corregir` sigue el orden obligatorio de research R4: `buscarNumeroCuenta` → `buscarParaActualizar` → cargar el movimiento y los posteriores. Así nunca recalcula sobre una entidad desactualizada de la caché.
   - `obtener` y `listar(cliente, numeroCuenta, RangoFechas, pageable)`, este con `readOnly`.
   - `log.info` por cada movimiento, sin datos sensibles.
-- [ ] T043 [US3] Crear `M/movimiento/controller/MovimientoController.java` en `/movimientos`:
+- [X] T043 [US3] Crear `M/movimiento/controller/MovimientoController.java` en `/movimientos`:
   - `POST`: 201 con `Location`.
   - `GET /{movimientoId}`.
   - `GET` de listado con `cliente`, `numeroCuenta` y `fecha` opcionales, y `@PageableDefault(size=20, sort="fecha", direction=DESC)`.
@@ -505,6 +505,9 @@ Commits con Conventional Commits: `test:` para las pruebas en rojo y `feat:` par
 
 - Verificar que cada prueba falle antes de implementar, especialmente T009, T011, T013 y T032 (TDD).
 - `casos-de-uso.feature` lo extienden T026, T036 y T046, en ese orden: por eso esas tareas no llevan [P].
+- **Desviaciones durante la implementación (US3)**:
+  - `Movimiento` y `TipoMovimiento` viven en `cuenta/entity` (agregado de `Cuenta`) en lugar de `movimiento/entity`: así su constructor y sus métodos de modificación son de paquete y el compilador garantiza que solo `Cuenta` crea y corrige movimientos.
+  - El listado usa `@EntityGraph` en `findAll(Specification, Pageable)` en lugar de un `fetch join` en las specifications: Spring Data omite el grafo en la consulta de conteo.
 - Montos siempre con `BigDecimal` y `compareTo`; nunca `double`.
 - El mensaje "Saldo no disponible" debe ser exacto en la excepción, en `title` y en `detail`.
 - Newman no está disponible en este entorno: la validación final se hace con `curl`, y la colección

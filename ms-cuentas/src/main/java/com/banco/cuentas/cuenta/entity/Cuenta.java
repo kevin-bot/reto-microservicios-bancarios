@@ -2,6 +2,8 @@ package com.banco.cuentas.cuenta.entity;
 
 import com.banco.cuentas.clienteref.entity.ClienteRef;
 import com.banco.cuentas.cuenta.exception.ClienteNoDisponibleException;
+import com.banco.cuentas.cuenta.exception.CuentaInactivaException;
+import com.banco.cuentas.cuenta.exception.SaldoNoDisponibleException;
 import com.banco.cuentas.shared.exception.DomainValidationException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -23,6 +25,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -109,6 +113,66 @@ public class Cuenta {
     public void cambiarTipo(TipoCuenta tipo) {
         validarTipo(tipo);
         this.tipo = tipo;
+    }
+
+    /**
+     * F2/F3: aplica un depósito (valor positivo) o un retiro (valor negativo) y devuelve el
+     * movimiento con su saldo resultante. Si el saldo quedara negativo, no cambia nada.
+     */
+    public Movimiento registrarMovimiento(BigDecimal valor, Instant fecha) {
+        verificarOperable();
+        BigDecimal monto = validarValor(valor);
+        BigDecimal nuevoSaldo = saldoDisponible.add(monto);
+        if (nuevoSaldo.signum() < 0) {
+            throw new SaldoNoDisponibleException();
+        }
+        this.saldoDisponible = nuevoSaldo;
+        return new Movimiento(this, fecha, monto, nuevoSaldo);
+    }
+
+    /**
+     * Corrige el valor de un movimiento y recalcula en cadena su saldo, el de todos los
+     * posteriores (en orden) y el saldo disponible. Primero calcula y valida todo; solo si ningún
+     * saldo queda negativo aplica los cambios (todo o nada).
+     */
+    public void corregirMovimiento(Movimiento movimiento, BigDecimal nuevoValor, List<Movimiento> posteriores) {
+        verificarOperable();
+        if (movimiento.getCuenta() != this) {
+            throw new DomainValidationException("El movimiento no pertenece a la cuenta " + numeroCuenta);
+        }
+        BigDecimal monto = validarValor(nuevoValor);
+
+        BigDecimal saldo = movimiento.getSaldo().subtract(movimiento.getValor()).add(monto);
+        List<BigDecimal> saldosNuevos = new ArrayList<>();
+        saldosNuevos.add(saldo);
+        for (Movimiento posterior : posteriores) {
+            saldo = saldo.add(posterior.getValor());
+            saldosNuevos.add(saldo);
+        }
+        if (saldosNuevos.stream().anyMatch(nuevo -> nuevo.signum() < 0)) {
+            throw new SaldoNoDisponibleException();
+        }
+
+        movimiento.corregirValor(monto);
+        movimiento.actualizarSaldo(saldosNuevos.getFirst());
+        for (int i = 0; i < posteriores.size(); i++) {
+            posteriores.get(i).actualizarSaldo(saldosNuevos.get(i + 1));
+        }
+        this.saldoDisponible = saldo;
+    }
+
+    private void verificarOperable() {
+        if (!estado) {
+            throw new CuentaInactivaException(numeroCuenta);
+        }
+        verificarClienteActivo();
+    }
+
+    private static BigDecimal validarValor(BigDecimal valor) {
+        if (valor == null || valor.signum() == 0) {
+            throw new DomainValidationException("El valor del movimiento debe ser distinto de 0");
+        }
+        return monto(valor, "valor del movimiento");
     }
 
     private void verificarClienteActivo() {
