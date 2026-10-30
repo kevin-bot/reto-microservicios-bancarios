@@ -28,6 +28,29 @@ services:
       timeout: 10s
       retries: 10
 
+  ms-cuentas:
+    build: ./ms-cuentas
+    container_name: ms-cuentas
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/cuentas_db
+      DB_USER: cuentas_user
+      DB_PASSWORD: cuentas_pass
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: 5672
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/api/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
   ms-clientes:
     build: ./ms-clientes
     container_name: ms-clientes
@@ -39,10 +62,14 @@ services:
       RABBIT_PORT: 5672
     ports:
       - "8081:8081"
+    # Espera a ms-cuentas para que su cola exista antes del primer evento de cliente
+    # (RabbitMQ descarta los mensajes de un exchange sin colas enlazadas). Ver research R8.
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      ms-cuentas:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8081/api/actuator/health | grep -q UP"]

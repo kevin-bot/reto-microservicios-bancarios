@@ -394,27 +394,27 @@ con recálculo y listado plano por cliente, cuenta y fechas (caso de uso 5).
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T051 [P] Crear `ms-cuentas/Dockerfile` (multi-stage, igual que en ms-clientes, `EXPOSE 8082`) y `ms-cuentas/.dockerignore`
-- [ ] T052 Actualizar `docker-compose.yml`:
+- [X] T051 [P] Crear `ms-cuentas/Dockerfile` (multi-stage, igual que en ms-clientes, `EXPOSE 8082`) y `ms-cuentas/.dockerignore`
+- [X] T052 Actualizar `docker-compose.yml`:
   - Agregar el servicio `ms-cuentas`:
     - `build: ./ms-cuentas`, puerto `8082:8082`;
     - variables de entorno hacia `postgres:5432/cuentas_db` y `rabbitmq`;
     - `depends_on` de postgres y rabbitmq con estado healthy;
     - healthcheck con `wget`.
   - Hacer que `ms-clientes` dependa de `ms-cuentas` con estado healthy (research R8).
-- [ ] T053 [P] Crear `BaseDatos.sql` en la raíz, consolidando:
+- [X] T053 [P] Crear `BaseDatos.sql` en la raíz, consolidando:
   - las bases y usuarios (`docker/postgres/init`);
   - el esquema de `clientes_db` (V1 de ms-clientes);
   - el esquema de `cuentas_db` (V1 de ms-cuentas).
 
   Con comentarios por sección y `\connect` entre bases.
-- [ ] T054 [P] Crear `postman/reto-banco-e2e.postman_collection.json`:
+- [X] T054 [P] Crear `postman/reto-banco-e2e.postman_collection.json`:
   - Variables `clientesUrl` y `cuentasUrl`.
   - Caso de uso 1 en ms-clientes y, tras una espera de 1 s en el pre-request, los casos 2–5 en ms-cuentas.
   - Casos de error: saldo no disponible, número duplicado, rango inválido.
   - Tests de estado y saldos en cada request.
   - Usa los números de cuenta literales del enunciado. La descripción de la colección indica ejecutarla sobre una base limpia (`docker compose down -v && docker compose up -d --build`).
-- [ ] T055 [P] Crear `ms-cuentas/README.md` (requisitos, pruebas, API, mensajería y DLQ, decisiones y mejoras futuras) y el `README.md` raíz:
+- [X] T055 [P] Crear `ms-cuentas/README.md` (requisitos, pruebas, API, mensajería y DLQ, decisiones y mejoras futuras) y el `README.md` raíz:
   - arquitectura de la solución (diagrama de los 2 servicios con Postgres y RabbitMQ);
   - despliegue con `docker compose up -d --build`;
   - URLs y orden de ejecución de las colecciones Postman;
@@ -422,13 +422,13 @@ con recálculo y listado plano por cliente, cuenta y fechas (caso de uso 5).
   - rendimiento, escalabilidad y resiliencia, incluido el compromiso de arranque: ms-clientes espera a que ms-cuentas esté healthy (research R8);
   - mejoras futuras;
   - cómo reiniciar la base antes de repetir la colección E2E.
-- [ ] T056 Revisión de cumplimiento de la constitución en ms-cuentas:
+- [X] T056 Revisión de cumplimiento de la constitución en ms-cuentas:
   - Buscar con grep que no haya `@Data`, `@Setter` ni `@EqualsAndHashCode` en las entidades.
   - Verificar que no haya `double` ni `float` en montos.
   - Verificar que ningún controller exponga entidades o use repositorios.
   - Verificar que no queden TODOs ni código comentado.
-- [ ] T057 Ejecutar `./mvnw test` en `ms-cuentas/` y en `ms-clientes/` (con Docker encendido): todas las pruebas en verde
-- [ ] T058 Validar quickstart.md contra `docker compose up -d --build`:
+- [X] T057 Ejecutar `./mvnw test` en `ms-cuentas/` y en `ms-clientes/` (con Docker encendido): todas las pruebas en verde
+- [X] T058 Validar quickstart.md contra `docker compose up -d --build`:
   - Escenarios 1–11 (incluidos 5b y 10b) con `curl`.
   - Verificación de la DLQ con un mensaje inválido.
   - SC-005: detener el contenedor `ms-clientes` y confirmar que ms-cuentas sigue registrando movimientos y generando reportes.
