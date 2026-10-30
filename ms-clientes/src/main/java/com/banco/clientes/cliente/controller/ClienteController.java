@@ -1,7 +1,9 @@
 package com.banco.clientes.cliente.controller;
 
 import com.banco.clientes.cliente.dto.ClienteCreateRequest;
+import com.banco.clientes.cliente.dto.ClientePatchRequest;
 import com.banco.clientes.cliente.dto.ClienteResponse;
+import com.banco.clientes.cliente.dto.ClienteUpdateRequest;
 import com.banco.clientes.cliente.service.ClienteService;
 import com.banco.clientes.shared.dto.PaginaResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,8 +16,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -63,5 +67,27 @@ public class ClienteController {
             @RequestParam(required = false) String identificacion,
             @ParameterObject @PageableDefault(size = 20, sort = "nombre") Pageable pageable) {
         return clienteService.listar(estado, identificacion, pageable);
+    }
+
+    @PutMapping("/{clienteId}")
+    @Operation(summary = "Reemplazar todos los datos editables de un cliente (sin contraseña)")
+    @ApiResponse(responseCode = "200", description = "Cliente actualizado")
+    @ApiResponse(responseCode = "400", description = "Datos inválidos o campo no permitido (contraseña)")
+    @ApiResponse(responseCode = "404", description = "Cliente inexistente o eliminado")
+    @ApiResponse(responseCode = "409", description = "Identificación duplicada")
+    public ClienteResponse actualizar(@PathVariable UUID clienteId,
+                                      @Valid @RequestBody ClienteUpdateRequest request) {
+        return clienteService.actualizar(clienteId, request);
+    }
+
+    @PatchMapping("/{clienteId}")
+    @Operation(summary = "Actualizar parcialmente un cliente (incluye cambio de contraseña y estado)")
+    @ApiResponse(responseCode = "200", description = "Cliente actualizado")
+    @ApiResponse(responseCode = "400", description = "Datos inválidos o cuerpo sin campos")
+    @ApiResponse(responseCode = "404", description = "Cliente inexistente o eliminado")
+    @ApiResponse(responseCode = "409", description = "Identificación duplicada")
+    public ClienteResponse actualizarParcial(@PathVariable UUID clienteId,
+                                             @Valid @RequestBody ClientePatchRequest request) {
+        return clienteService.actualizarParcial(clienteId, request);
     }
 }

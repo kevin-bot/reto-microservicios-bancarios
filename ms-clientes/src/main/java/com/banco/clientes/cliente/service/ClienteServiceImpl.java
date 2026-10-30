@@ -1,7 +1,9 @@
 package com.banco.clientes.cliente.service;
 
 import com.banco.clientes.cliente.dto.ClienteCreateRequest;
+import com.banco.clientes.cliente.dto.ClientePatchRequest;
 import com.banco.clientes.cliente.dto.ClienteResponse;
+import com.banco.clientes.cliente.dto.ClienteUpdateRequest;
 import com.banco.clientes.cliente.entity.Cliente;
 import com.banco.clientes.cliente.event.ClienteEvento;
 import com.banco.clientes.cliente.event.ClienteEventoDominio;
@@ -62,6 +64,70 @@ public class ClienteServiceImpl implements ClienteService {
                 .and(ClienteSpecifications.conEstado(estado))
                 .and(ClienteSpecifications.conIdentificacion(identificacion));
         return PaginaResponse.de(clienteRepository.findAll(filtro, pageable).map(clienteMapper::toResponse));
+    }
+
+    @Override
+    @Transactional
+    public ClienteResponse actualizar(UUID clienteId, ClienteUpdateRequest request) {
+        Cliente cliente = buscarVigente(clienteId);
+        verificarIdentificacionDisponible(cliente, request.identificacion());
+
+        cliente.actualizarDatosPersonales(request.nombre(), request.genero(), request.edad(),
+                request.identificacion());
+        cliente.actualizarContacto(request.direccion(), request.telefono());
+        aplicarEstado(cliente, request.estado());
+        return guardarActualizacion(cliente);
+    }
+
+    @Override
+    @Transactional
+    public ClienteResponse actualizarParcial(UUID clienteId, ClientePatchRequest request) {
+        Cliente cliente = buscarVigente(clienteId);
+        if (request.identificacion() != null) {
+            verificarIdentificacionDisponible(cliente, request.identificacion());
+        }
+
+        cliente.actualizarDatosPersonales(
+                valorOActual(request.nombre(), cliente.getNombre()),
+                valorOActual(request.genero(), cliente.getGenero()),
+                valorOActual(request.edad(), cliente.getEdad()),
+                valorOActual(request.identificacion(), cliente.getIdentificacion()));
+        cliente.actualizarContacto(
+                valorOActual(request.direccion(), cliente.getDireccion()),
+                valorOActual(request.telefono(), cliente.getTelefono()));
+        if (request.estado() != null) {
+            aplicarEstado(cliente, request.estado());
+        }
+        if (request.contrasena() != null) {
+            cliente.cambiarContrasena(passwordEncoder.encode(request.contrasena()));
+        }
+        return guardarActualizacion(cliente);
+    }
+
+    private ClienteResponse guardarActualizacion(Cliente cliente) {
+        Cliente guardado = clienteRepository.save(cliente);
+        publicarEvento(guardado, TipoEventoCliente.CLIENTE_ACTUALIZADO);
+        log.info("Cliente actualizado (clienteId={})", guardado.getClienteId());
+        return clienteMapper.toResponse(guardado);
+    }
+
+    private void verificarIdentificacionDisponible(Cliente cliente, String identificacion) {
+        boolean cambia = !identificacion.equals(cliente.getIdentificacion());
+        if (cambia && clienteRepository.existsByIdentificacionAndClienteIdNot(identificacion, cliente.getClienteId())) {
+            throw new IdentificacionDuplicadaException(identificacion);
+        }
+    }
+
+    private static void aplicarEstado(Cliente cliente, boolean activo) {
+        if (activo) {
+            cliente.activar();
+        } else {
+            cliente.desactivar();
+        }
+    }
+
+    private static <T> T valorOActual(T nuevo, T actual) {
+        return nuevo != null ? nuevo : actual;
     }
 
     private Cliente buscarVigente(UUID clienteId) {

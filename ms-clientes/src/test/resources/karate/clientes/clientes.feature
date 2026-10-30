@@ -114,6 +114,62 @@ Feature: API de clientes (ms-clientes)
     Then status 200
     And match response.totalElementos == 0
 
+  Scenario: Actualizar un cliente con PATCH y PUT
+    * def identificacion = identificacionUnica()
+    Given path 'clientes'
+    And request { nombre: 'Cliente Actualizable', genero: 'FEMENINO', edad: 33, identificacion: '#(identificacion)', direccion: 'Ambato', telefono: '0984445566', contrasena: 'clave1' }
+    When method post
+    Then status 201
+    * def clienteId = response.clienteId
+
+    # PATCH: solo cambia la dirección
+    Given path 'clientes', clienteId
+    And request { direccion: 'Amazonas y NNUU' }
+    When method patch
+    Then status 200
+    And match response.direccion == 'Amazonas y NNUU'
+    And match response.nombre == 'Cliente Actualizable'
+    And match response.edad == 33
+
+    Given path 'clientes', clienteId
+    When method get
+    Then status 200
+    And match response.direccion == 'Amazonas y NNUU'
+
+    # PATCH: desactivar
+    Given path 'clientes', clienteId
+    And request { estado: false }
+    When method patch
+    Then status 200
+    And match response.estado == false
+
+    # PATCH: cambiar contraseña
+    Given path 'clientes', clienteId
+    And request { contrasena: 'nuevaClave' }
+    When method patch
+    Then status 200
+    And match response.contrasena == '#notpresent'
+
+    # PATCH: cuerpo vacío
+    Given path 'clientes', clienteId
+    And request {}
+    When method patch
+    Then status 400
+
+    # PUT: reemplazo completo sin contraseña
+    Given path 'clientes', clienteId
+    And request { nombre: 'Cliente Reemplazado', genero: 'OTRO', edad: 34, identificacion: '#(identificacion)', direccion: 'Riobamba', telefono: '0984445567', estado: true }
+    When method put
+    Then status 200
+    And match response contains { nombre: 'Cliente Reemplazado', genero: 'OTRO', edad: 34, direccion: 'Riobamba', telefono: '0984445567', estado: true }
+
+    # PUT: la contraseña no está permitida
+    Given path 'clientes', clienteId
+    And request { nombre: 'Cliente Reemplazado', genero: 'OTRO', edad: 34, identificacion: '#(identificacion)', direccion: 'Riobamba', telefono: '0984445567', estado: true, contrasena: 'otra' }
+    When method put
+    Then status 400
+    And match response.title == 'Solicitud mal formada'
+
   Scenario: Ordenar por un campo inexistente responde 400
     Given path 'clientes'
     And param sort = 'campoInexistente'

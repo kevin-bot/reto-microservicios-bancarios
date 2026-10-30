@@ -1,7 +1,9 @@
 package com.banco.clientes.cliente.controller;
 
 import com.banco.clientes.cliente.dto.ClienteCreateRequest;
+import com.banco.clientes.cliente.dto.ClientePatchRequest;
 import com.banco.clientes.cliente.dto.ClienteResponse;
+import com.banco.clientes.cliente.dto.ClienteUpdateRequest;
 import com.banco.clientes.cliente.entity.Cliente;
 import com.banco.clientes.cliente.entity.Genero;
 import com.banco.clientes.cliente.exception.ClienteNoEncontradoException;
@@ -33,7 +35,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -251,6 +255,150 @@ class ClienteControllerTest {
             mockMvc.perform(get("/clientes").param("sort", "campoInexistente"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.title").value("Parámetro inválido"));
+        }
+    }
+
+    @Nested
+    @DisplayName("PUT /clientes/{clienteId}")
+    class Actualizar {
+
+        private static final String ACTUALIZACION_VALIDA = """
+                {
+                  "nombre": "Jose Lema",
+                  "genero": "MASCULINO",
+                  "edad": 36,
+                  "identificacion": "1712345678",
+                  "direccion": "Amazonas y NNUU",
+                  "telefono": "098254785",
+                  "estado": true
+                }
+                """;
+
+        @Test
+        @DisplayName("200 con el cliente actualizado")
+        void actualizar_cuandoDatosValidos_debeResponder200() throws Exception {
+            // Given
+            when(clienteService.actualizar(eq(CLIENTE_ID), any(ClienteUpdateRequest.class)))
+                    .thenReturn(respuestaJoseLema());
+
+            // When / Then
+            mockMvc.perform(put("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content(ACTUALIZACION_VALIDA))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.clienteId").value(CLIENTE_ID.toString()))
+                    .andExpect(jsonPath("$.contrasena").doesNotExist());
+        }
+
+        @Test
+        @DisplayName("400 si se intenta enviar la contraseña (solo se cambia por PATCH)")
+        void actualizar_cuandoIncluyeContrasena_debeResponder400() throws Exception {
+            String cuerpo = ACTUALIZACION_VALIDA.replace("\"estado\": true", "\"estado\": true, \"contrasena\": \"nueva\"");
+
+            mockMvc.perform(put("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content(cuerpo))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.title").value("Solicitud mal formada"));
+            verify(clienteService, never()).actualizar(any(), any());
+        }
+
+        @Test
+        @DisplayName("400 si falta un campo obligatorio")
+        void actualizar_cuandoFaltaEstado_debeResponder400() throws Exception {
+            String cuerpo = ACTUALIZACION_VALIDA.replace(",\n  \"estado\": true", "");
+
+            mockMvc.perform(put("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content(cuerpo))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errores.estado").exists());
+        }
+
+        @Test
+        @DisplayName("404 cuando el cliente no existe")
+        void actualizar_cuandoClienteNoExiste_debeResponder404() throws Exception {
+            // Given
+            when(clienteService.actualizar(eq(CLIENTE_ID), any(ClienteUpdateRequest.class)))
+                    .thenThrow(new ClienteNoEncontradoException(CLIENTE_ID));
+
+            // When / Then
+            mockMvc.perform(put("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content(ACTUALIZACION_VALIDA))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("409 cuando la identificación pertenece a otro cliente")
+        void actualizar_cuandoIdentificacionDuplicada_debeResponder409() throws Exception {
+            // Given
+            when(clienteService.actualizar(eq(CLIENTE_ID), any(ClienteUpdateRequest.class)))
+                    .thenThrow(new IdentificacionDuplicadaException("1712345678"));
+
+            // When / Then
+            mockMvc.perform(put("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content(ACTUALIZACION_VALIDA))
+                    .andExpect(status().isConflict());
+        }
+    }
+
+    @Nested
+    @DisplayName("PATCH /clientes/{clienteId}")
+    class ActualizarParcial {
+
+        @Test
+        @DisplayName("200 al cambiar solo la dirección")
+        void actualizarParcial_cuandoSoloDireccion_debeResponder200() throws Exception {
+            // Given
+            when(clienteService.actualizarParcial(eq(CLIENTE_ID), any(ClientePatchRequest.class)))
+                    .thenReturn(respuestaJoseLema());
+
+            // When / Then
+            mockMvc.perform(patch("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"direccion\": \"Amazonas y NNUU\"}"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("400 cuando el cuerpo no trae ningún campo")
+        void actualizarParcial_cuandoCuerpoVacio_debeResponder400() throws Exception {
+            mockMvc.perform(patch("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.title").value("Datos inválidos"));
+            verify(clienteService, never()).actualizarParcial(any(), any());
+        }
+
+        @Test
+        @DisplayName("400 cuando la edad enviada es menor a 18")
+        void actualizarParcial_cuandoEdadMenorA18_debeResponder400() throws Exception {
+            mockMvc.perform(patch("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"edad\": 17}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errores.edad").exists());
+        }
+
+        @Test
+        @DisplayName("404 cuando el cliente no existe")
+        void actualizarParcial_cuandoClienteNoExiste_debeResponder404() throws Exception {
+            // Given
+            when(clienteService.actualizarParcial(eq(CLIENTE_ID), any(ClientePatchRequest.class)))
+                    .thenThrow(new ClienteNoEncontradoException(CLIENTE_ID));
+
+            // When / Then
+            mockMvc.perform(patch("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"estado\": false}"))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("409 cuando la identificación pertenece a otro cliente")
+        void actualizarParcial_cuandoIdentificacionDuplicada_debeResponder409() throws Exception {
+            // Given
+            when(clienteService.actualizarParcial(eq(CLIENTE_ID), any(ClientePatchRequest.class)))
+                    .thenThrow(new IdentificacionDuplicadaException("ABC12345"));
+
+            // When / Then
+            mockMvc.perform(patch("/clientes/{clienteId}", CLIENTE_ID)
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"identificacion\": \"ABC12345\"}"))
+                    .andExpect(status().isConflict());
         }
     }
 }

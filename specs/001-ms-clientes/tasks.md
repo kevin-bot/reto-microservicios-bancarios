@@ -253,8 +253,8 @@ implementar.
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T038 [P] [US3] Crear `T/shared/validation/AlMenosUnCampoValidatorTest.java`: un record con todos los campos `null` es inválido, y con al menos un campo no nulo es válido
-- [ ] T039 [P] [US3] En `T/cliente/service/ClienteServiceImplTest.java`, agregar pruebas de `actualizar` (PUT) y `actualizarParcial` (PATCH):
+- [X] T038 [P] [US3] Crear `T/shared/validation/AlMenosUnCampoValidatorTest.java`: un record con todos los campos `null` es inválido, y con al menos un campo no nulo es válido
+- [X] T039 [P] [US3] En `T/cliente/service/ClienteServiceImplTest.java`, agregar pruebas de `actualizar` (PUT) y `actualizarParcial` (PATCH):
   - aplican los cambios mediante métodos de dominio;
   - `estado=true/false` invoca `activar()` o `desactivar()`;
   - una contraseña en PATCH se hashea;
@@ -262,7 +262,7 @@ implementar.
   - un cliente inexistente lanza `ClienteNoEncontradoException`;
   - publica `CLIENTE_ACTUALIZADO`;
   - PATCH no modifica los campos `null`.
-- [ ] T040 [P] [US3] En `T/cliente/controller/ClienteControllerTest.java`, agregar pruebas de:
+- [X] T040 [P] [US3] En `T/cliente/controller/ClienteControllerTest.java`, agregar pruebas de:
   - PUT válido: 200.
   - PUT con `contrasena`: 400 "Solicitud mal formada".
   - PATCH `{"direccion":"Amazonas y NNUU"}`: 200.
@@ -270,7 +270,7 @@ implementar.
   - PATCH con edad 17: 400.
   - Identificación duplicada: 409.
   - Cliente inexistente: 404.
-- [ ] T041 [P] [US3] En `TR/karate/clientes/clientes.feature`, agregar escenarios para:
+- [X] T041 [P] [US3] En `TR/karate/clientes/clientes.feature`, agregar escenarios para:
   - PATCH de dirección: se verifica con un GET posterior.
   - PATCH de estado a `false`.
   - PATCH de contraseña: 200, sin `contrasena` en la respuesta.
@@ -279,21 +279,21 @@ implementar.
 
 ### Implementation for User Story 3
 
-- [ ] T042 [P] [US3] Crear `M/shared/validation/AlMenosUnCampo.java` (anotación de clase con Bean Validation) y `M/shared/validation/AlMenosUnCampoValidator.java` (recorre los componentes del record por reflexión y es válido si al menos uno no es `null`)
-- [ ] T043 [P] [US3] Crear el record `M/cliente/dto/ClienteUpdateRequest.java` con `nombre`, `genero`, `edad`, `identificacion`, `direccion`, `telefono` y `estado`, **sin `contrasena`**:
+- [X] T042 [P] [US3] Crear `M/shared/validation/AlMenosUnCampo.java` (anotación de clase con Bean Validation) y `M/shared/validation/AlMenosUnCampoValidator.java` (recorre los componentes del record por reflexión y es válido si al menos uno no es `null`)
+- [X] T043 [P] [US3] Crear el record `M/cliente/dto/ClienteUpdateRequest.java` con `nombre`, `genero`, `edad`, `identificacion`, `direccion`, `telefono` y `estado`, **sin `contrasena`**:
   - todos los campos obligatorios;
   - las mismas restricciones que en T028;
   - `estado` con `@NotNull`.
-- [ ] T044 [P] [US3] Crear el record `M/cliente/dto/ClientePatchRequest.java` anotado con `@AlMenosUnCampo`:
+- [X] T044 [P] [US3] Crear el record `M/cliente/dto/ClientePatchRequest.java` anotado con `@AlMenosUnCampo`:
   - todos los campos son opcionales, incluida `contrasena` (`@Size(min=4, max=72)`);
   - cada campo, si viene, cumple las restricciones de T028 (sin `@NotNull`).
-- [ ] T045 [US3] Agregar `actualizar(UUID, ClienteUpdateRequest)` y `actualizarParcial(UUID, ClientePatchRequest)` a la interfaz `M/cliente/service/ClienteService.java` y a `ClienteServiceImpl.java`:
+- [X] T045 [US3] Agregar `actualizar(UUID, ClienteUpdateRequest)` y `actualizarParcial(UUID, ClientePatchRequest)` a la interfaz `M/cliente/service/ClienteService.java` y a `ClienteServiceImpl.java`:
   - Validan la identificación duplicada solo si cambió.
   - Combinan los campos `null` con los valores actuales antes de llamar a `actualizarDatosPersonales` y `actualizarContacto`.
   - Aplican `estado` con `activar()` o `desactivar()`.
   - Hashean la contraseña y llaman a `cambiarContrasena(...)`.
   - Publican `CLIENTE_ACTUALIZADO`.
-- [ ] T046 [US3] Agregar `PUT /{clienteId}` y `PATCH /{clienteId}` con `@Valid` a `M/cliente/controller/ClienteController.java`
+- [X] T046 [US3] Agregar `PUT /{clienteId}` y `PATCH /{clienteId}` con `@Valid` a `M/cliente/controller/ClienteController.java`
 
 **Checkpoint**: US1, US2 y US3 funcionan.
 

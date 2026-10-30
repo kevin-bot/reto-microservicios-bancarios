@@ -1,7 +1,9 @@
 package com.banco.clientes.cliente.service;
 
 import com.banco.clientes.cliente.dto.ClienteCreateRequest;
+import com.banco.clientes.cliente.dto.ClientePatchRequest;
 import com.banco.clientes.cliente.dto.ClienteResponse;
+import com.banco.clientes.cliente.dto.ClienteUpdateRequest;
 import com.banco.clientes.cliente.entity.Cliente;
 import com.banco.clientes.cliente.entity.Genero;
 import com.banco.clientes.cliente.event.ClienteEventoDominio;
@@ -183,6 +185,177 @@ class ClienteServiceImplTest {
             assertThat(resultado.totalElementos()).isEqualTo(1);
             assertThat(resultado.totalPaginas()).isEqualTo(1);
         }
+    }
+
+    @Nested
+    @DisplayName("actualizar (PUT)")
+    class Actualizar {
+
+        private ClienteUpdateRequest solicitud(String identificacion, boolean estado) {
+            return new ClienteUpdateRequest("Jose Antonio Lema", Genero.OTRO, 36, identificacion,
+                    "Amazonas y NNUU", "097548965", estado);
+        }
+
+        @Test
+        @DisplayName("Reemplaza los datos editables, aplica el estado y publica CLIENTE_ACTUALIZADO")
+        void actualizar_cuandoDatosValidos_debeAplicarCambiosYPublicarEvento() {
+            // Given
+            Cliente cliente = clienteExistente();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(cliente.getClienteId()))
+                    .thenReturn(Optional.of(cliente));
+            when(clienteRepository.existsByIdentificacionAndClienteIdNot("ABC12345", cliente.getClienteId()))
+                    .thenReturn(false);
+            when(clienteRepository.save(cliente)).thenReturn(cliente);
+
+            // When
+            ClienteResponse respuesta = clienteService.actualizar(cliente.getClienteId(), solicitud("ABC12345", false));
+
+            // Then
+            assertThat(respuesta.nombre()).isEqualTo("Jose Antonio Lema");
+            assertThat(respuesta.identificacion()).isEqualTo("ABC12345");
+            assertThat(respuesta.direccion()).isEqualTo("Amazonas y NNUU");
+            assertThat(respuesta.estado()).isFalse();
+            assertThat(cliente.getContrasena()).isEqualTo(HASH);
+            verificarEventoPublicado(TipoEventoCliente.CLIENTE_ACTUALIZADO);
+        }
+
+        @Test
+        @DisplayName("No consulta duplicados si la identificación no cambia")
+        void actualizar_cuandoIdentificacionSinCambios_noDebeVerificarDuplicados() {
+            // Given
+            Cliente cliente = clienteExistente();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(cliente.getClienteId()))
+                    .thenReturn(Optional.of(cliente));
+            when(clienteRepository.save(cliente)).thenReturn(cliente);
+
+            // When
+            clienteService.actualizar(cliente.getClienteId(), solicitud("1712345678", true));
+
+            // Then
+            verify(clienteRepository, never()).existsByIdentificacionAndClienteIdNot(any(), any());
+        }
+
+        @Test
+        @DisplayName("Rechaza la identificación de otro cliente sin publicar eventos")
+        void actualizar_cuandoIdentificacionDeOtroCliente_debeLanzarIdentificacionDuplicada() {
+            // Given
+            Cliente cliente = clienteExistente();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(cliente.getClienteId()))
+                    .thenReturn(Optional.of(cliente));
+            when(clienteRepository.existsByIdentificacionAndClienteIdNot("ABC12345", cliente.getClienteId()))
+                    .thenReturn(true);
+
+            // When / Then
+            assertThatThrownBy(() -> clienteService.actualizar(cliente.getClienteId(), solicitud("ABC12345", true)))
+                    .isInstanceOf(IdentificacionDuplicadaException.class);
+            assertThat(cliente.getIdentificacion()).isEqualTo("1712345678");
+            verify(eventPublisher, never()).publishEvent(any());
+        }
+
+        @Test
+        @DisplayName("Lanza ClienteNoEncontradoException si el cliente no existe o está eliminado")
+        void actualizar_cuandoClienteNoExiste_debeLanzarClienteNoEncontrado() {
+            // Given
+            UUID clienteId = UUID.randomUUID();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(clienteId)).thenReturn(Optional.empty());
+
+            // When / Then
+            assertThatThrownBy(() -> clienteService.actualizar(clienteId, solicitud("ABC12345", true)))
+                    .isInstanceOf(ClienteNoEncontradoException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("actualizarParcial (PATCH)")
+    class ActualizarParcial {
+
+        private static ClientePatchRequest soloDireccion(String direccion) {
+            return new ClientePatchRequest(null, null, null, null, direccion, null, null, null);
+        }
+
+        @Test
+        @DisplayName("Cambia solo los campos enviados, conserva el resto y publica CLIENTE_ACTUALIZADO")
+        void actualizarParcial_cuandoSoloDireccion_debeConservarElResto() {
+            // Given
+            Cliente cliente = clienteExistente();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(cliente.getClienteId()))
+                    .thenReturn(Optional.of(cliente));
+            when(clienteRepository.save(cliente)).thenReturn(cliente);
+
+            // When
+            ClienteResponse respuesta = clienteService.actualizarParcial(cliente.getClienteId(),
+                    soloDireccion("Amazonas y NNUU"));
+
+            // Then
+            assertThat(respuesta.direccion()).isEqualTo("Amazonas y NNUU");
+            assertThat(respuesta.nombre()).isEqualTo("Jose Lema");
+            assertThat(respuesta.edad()).isEqualTo(35);
+            assertThat(respuesta.identificacion()).isEqualTo("1712345678");
+            assertThat(respuesta.telefono()).isEqualTo("098254785");
+            assertThat(respuesta.estado()).isTrue();
+            verify(clienteRepository, never()).existsByIdentificacionAndClienteIdNot(any(), any());
+            verify(passwordEncoder, never()).encode(any());
+            verificarEventoPublicado(TipoEventoCliente.CLIENTE_ACTUALIZADO);
+        }
+
+        @Test
+        @DisplayName("Hashea la nueva contraseña antes de guardarla")
+        void actualizarParcial_cuandoContrasena_debeGuardarHash() {
+            // Given
+            Cliente cliente = clienteExistente();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(cliente.getClienteId()))
+                    .thenReturn(Optional.of(cliente));
+            when(passwordEncoder.encode("nuevaClave")).thenReturn("$2a$10$hashNuevo");
+            when(clienteRepository.save(cliente)).thenReturn(cliente);
+
+            // When
+            clienteService.actualizarParcial(cliente.getClienteId(),
+                    new ClientePatchRequest(null, null, null, null, null, null, "nuevaClave", null));
+
+            // Then
+            assertThat(cliente.getContrasena()).isEqualTo("$2a$10$hashNuevo");
+        }
+
+        @Test
+        @DisplayName("estado=true reactiva a un cliente inactivo")
+        void actualizarParcial_cuandoEstadoTrue_debeActivarCliente() {
+            // Given
+            Cliente cliente = clienteExistente();
+            cliente.desactivar();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(cliente.getClienteId()))
+                    .thenReturn(Optional.of(cliente));
+            when(clienteRepository.save(cliente)).thenReturn(cliente);
+
+            // When
+            ClienteResponse respuesta = clienteService.actualizarParcial(cliente.getClienteId(),
+                    new ClientePatchRequest(null, null, null, null, null, null, null, true));
+
+            // Then
+            assertThat(respuesta.estado()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Rechaza una identificación que pertenece a otro cliente")
+        void actualizarParcial_cuandoIdentificacionDeOtroCliente_debeLanzarIdentificacionDuplicada() {
+            // Given
+            Cliente cliente = clienteExistente();
+            when(clienteRepository.findByClienteIdAndEliminadoFalse(cliente.getClienteId()))
+                    .thenReturn(Optional.of(cliente));
+            when(clienteRepository.existsByIdentificacionAndClienteIdNot("ABC12345", cliente.getClienteId()))
+                    .thenReturn(true);
+
+            // When / Then
+            assertThatThrownBy(() -> clienteService.actualizarParcial(cliente.getClienteId(),
+                    new ClientePatchRequest(null, null, null, "ABC12345", null, null, null, null)))
+                    .isInstanceOf(IdentificacionDuplicadaException.class);
+            verify(eventPublisher, never()).publishEvent(any());
+        }
+    }
+
+    private void verificarEventoPublicado(TipoEventoCliente tipo) {
+        ArgumentCaptor<ClienteEventoDominio> evento = ArgumentCaptor.forClass(ClienteEventoDominio.class);
+        verify(eventPublisher).publishEvent(evento.capture());
+        assertThat(evento.getValue().evento().tipo()).isEqualTo(tipo);
     }
 
     private static Cliente clienteExistente() {
