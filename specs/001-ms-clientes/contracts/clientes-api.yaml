@@ -1,0 +1,219 @@
+openapi: 3.0.3
+info:
+  title: ms-clientes API
+  version: 1.0.0
+  description: >
+    Gestión de clientes (Persona → Cliente). La contraseña nunca se devuelve.
+    Los errores siguen RFC 7807 (application/problem+json).
+servers:
+  - url: http://localhost:8081/api
+paths:
+  /clientes:
+    post:
+      summary: Registrar un cliente
+      operationId: crearCliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClienteCreateRequest' }
+      responses:
+        '201':
+          description: Cliente creado
+          headers:
+            Location:
+              schema: { type: string, example: /api/clientes/3f1c2a9e-8b0d-4c55-9a6e-2b7f6c0d1e42 }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClienteResponse' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '409': { $ref: '#/components/responses/IdentificacionDuplicada' }
+        '500': { $ref: '#/components/responses/ErrorInterno' }
+    get:
+      summary: Listar clientes activos e inactivos (paginado, excluye eliminados, filtros opcionales)
+      operationId: listarClientes
+      parameters:
+        - { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+        - { name: size, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { name: sort, in: query, schema: { type: string, example: 'nombre,asc' } }
+        - { name: estado, in: query, description: Filtra por activo/inactivo, schema: { type: boolean } }
+        - { name: identificacion, in: query, description: Filtra por identificación exacta, schema: { type: string } }
+      responses:
+        '200':
+          description: Página de clientes
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaClienteResponse' }
+  /clientes/{clienteId}:
+    parameters:
+      - name: clienteId
+        in: path
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: Consultar un cliente
+      operationId: obtenerCliente
+      responses:
+        '200':
+          description: Cliente
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClienteResponse' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '404': { $ref: '#/components/responses/ClienteNoEncontrado' }
+    put:
+      summary: Reemplazar todos los datos editables de un cliente
+      operationId: actualizarCliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClienteUpdateRequest' }
+      responses:
+        '200':
+          description: Cliente actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClienteResponse' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '404': { $ref: '#/components/responses/ClienteNoEncontrado' }
+        '409': { $ref: '#/components/responses/IdentificacionDuplicada' }
+    patch:
+      summary: Actualizar parcialmente un cliente (campos omitidos o null no cambian)
+      operationId: actualizarParcialCliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientePatchRequest' }
+      responses:
+        '200':
+          description: Cliente actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClienteResponse' }
+        '400': { $ref: '#/components/responses/DatosInvalidos' }
+        '404': { $ref: '#/components/responses/ClienteNoEncontrado' }
+        '409': { $ref: '#/components/responses/IdentificacionDuplicada' }
+    delete:
+      summary: Eliminar (lógicamente) un cliente
+      operationId: eliminarCliente
+      responses:
+        '204': { description: Cliente eliminado }
+        '404': { $ref: '#/components/responses/ClienteNoEncontrado' }
+
+components:
+  schemas:
+    Genero:
+      type: string
+      enum: [MASCULINO, FEMENINO, OTRO]
+    ClienteCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [nombre, genero, edad, identificacion, direccion, telefono, contrasena]
+      properties:
+        nombre: { type: string, minLength: 1, maxLength: 100, example: Jose Lema }
+        genero: { $ref: '#/components/schemas/Genero' }
+        edad: { type: integer, minimum: 18, maximum: 120, example: 35 }
+        identificacion: { type: string, pattern: '^[A-Za-z0-9]{5,20}$', example: '1712345678' }
+        direccion: { type: string, minLength: 1, maxLength: 200, example: Otavalo sn y principal }
+        telefono: { type: string, pattern: '^[0-9]{7,15}$', example: '098254785' }
+        contrasena: { type: string, minLength: 4, maxLength: 72, writeOnly: true, example: '1234' }
+        estado: { type: boolean, default: true }
+    ClienteUpdateRequest:
+      type: object
+      description: No incluye la contraseña; enviarla produce 400 (solo se cambia por PATCH).
+      additionalProperties: false
+      required: [nombre, genero, edad, identificacion, direccion, telefono, estado]
+      properties:
+        nombre: { type: string, minLength: 1, maxLength: 100 }
+        genero: { $ref: '#/components/schemas/Genero' }
+        edad: { type: integer, minimum: 18, maximum: 120 }
+        identificacion: { type: string, pattern: '^[A-Za-z0-9]{5,20}$' }
+        direccion: { type: string, minLength: 1, maxLength: 200 }
+        telefono: { type: string, pattern: '^[0-9]{7,15}$' }
+        estado: { type: boolean }
+    ClientePatchRequest:
+      type: object
+      description: Al menos un campo debe estar presente y no nulo.
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        nombre: { type: string, minLength: 1, maxLength: 100 }
+        genero: { $ref: '#/components/schemas/Genero' }
+        edad: { type: integer, minimum: 18, maximum: 120 }
+        identificacion: { type: string, pattern: '^[A-Za-z0-9]{5,20}$' }
+        direccion: { type: string, minLength: 1, maxLength: 200, example: Amazonas y NNUU }
+        telefono: { type: string, pattern: '^[0-9]{7,15}$' }
+        contrasena: { type: string, minLength: 4, maxLength: 72, writeOnly: true, description: Único medio para cambiar la contraseña }
+        estado: { type: boolean, example: false }
+    ClienteResponse:
+      type: object
+      description: Nunca incluye la contraseña.
+      properties:
+        clienteId: { type: string, format: uuid }
+        nombre: { type: string }
+        genero: { $ref: '#/components/schemas/Genero' }
+        edad: { type: integer }
+        identificacion: { type: string }
+        direccion: { type: string }
+        telefono: { type: string }
+        estado: { type: boolean }
+    PaginaClienteResponse:
+      type: object
+      properties:
+        contenido:
+          type: array
+          items: { $ref: '#/components/schemas/ClienteResponse' }
+        pagina: { type: integer, example: 0 }
+        tamano: { type: integer, example: 20 }
+        totalElementos: { type: integer, format: int64, example: 3 }
+        totalPaginas: { type: integer, example: 1 }
+    ProblemDetail:
+      type: object
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        errores:
+          type: object
+          description: Solo en 400 de validación; campo → mensaje.
+          additionalProperties: { type: string }
+  responses:
+    DatosInvalidos:
+      description: Datos inválidos o solicitud mal formada
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+          example:
+            type: about:blank
+            title: Datos inválidos
+            status: 400
+            detail: La solicitud contiene campos inválidos
+            instance: /api/clientes
+            errores: { edad: 'debe ser menor o igual a 120' }
+    ClienteNoEncontrado:
+      description: Cliente inexistente o eliminado
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+          example:
+            title: Cliente no encontrado
+            status: 404
+            detail: No existe un cliente con id 3f1c2a9e-8b0d-4c55-9a6e-2b7f6c0d1e42
+    IdentificacionDuplicada:
+      description: La identificación ya pertenece a otro cliente (incluidos eliminados)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+          example:
+            title: Identificación duplicada
+            status: 409
+            detail: Ya existe un cliente con identificación 1712345678
+    ErrorInterno:
+      description: Error inesperado (sin detalles internos)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }

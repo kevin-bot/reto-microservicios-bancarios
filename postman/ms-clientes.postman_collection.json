@@ -1,0 +1,726 @@
+{
+  "info": {
+    "name": "ms-clientes",
+    "description": "Validación de la API de clientes: caso de uso 1 del enunciado y escenarios CRUD del quickstart. Ejecutar en orden con el Collection Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Caso de uso 1 - Creación de usuarios",
+      "item": [
+        {
+          "name": "Crear Jose Lema",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Jose Lema\",\n  \"genero\": \"MASCULINO\",\n  \"edad\": 35,\n  \"identificacion\": \"{{joseIdentificacion}}\",\n  \"direccion\": \"Otavalo sn y principal\",\n  \"telefono\": \"098254785\",\n  \"contrasena\": \"1234\",\n  \"estado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('joseIdentificacion')) {",
+                  "  pm.collectionVariables.set('joseIdentificacion', '17' + Date.now().toString().slice(-8));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('No expone la contraseña', () => pm.expect(pm.response.json()).to.not.have.property('contrasena'));",
+                  "pm.collectionVariables.set('joseId', pm.response.json().clienteId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear Marianela Montalvo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Marianela Montalvo\",\n  \"genero\": \"FEMENINO\",\n  \"edad\": 30,\n  \"identificacion\": \"{{marianelaIdentificacion}}\",\n  \"direccion\": \"Amazonas y NNUU\",\n  \"telefono\": \"097548965\",\n  \"contrasena\": \"5678\",\n  \"estado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('marianelaIdentificacion')) {",
+                  "  pm.collectionVariables.set('marianelaIdentificacion', '18' + Date.now().toString().slice(-8));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('No expone la contraseña', () => pm.expect(pm.response.json()).to.not.have.property('contrasena'));",
+                  "pm.collectionVariables.set('marianelaId', pm.response.json().clienteId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear Juan Osorio",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan Osorio\",\n  \"genero\": \"MASCULINO\",\n  \"edad\": 42,\n  \"identificacion\": \"{{juanIdentificacion}}\",\n  \"direccion\": \"13 junio y Equinoccial\",\n  \"telefono\": \"098874587\",\n  \"contrasena\": \"1245\",\n  \"estado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('juanIdentificacion')) {",
+                  "  pm.collectionVariables.set('juanIdentificacion', '19' + Date.now().toString().slice(-8));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('No expone la contraseña', () => pm.expect(pm.response.json()).to.not.have.property('contrasena'));",
+                  "pm.collectionVariables.set('juanId', pm.response.json().clienteId);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Escenarios CRUD (quickstart)",
+      "item": [
+        {
+          "name": "Crear cliente temporal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Temporal\",\n  \"genero\": \"OTRO\",\n  \"edad\": 28,\n  \"identificacion\": \"{{temporalIdentificacion}}\",\n  \"direccion\": \"Quito centro\",\n  \"telefono\": \"0991234567\",\n  \"contrasena\": \"clave1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('temporalIdentificacion', 'T' + Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('No expone la contraseña', () => pm.expect(pm.response.json()).to.not.have.property('contrasena'));",
+                  "pm.test('Header Location', () => pm.expect(pm.response.headers.get('Location')).to.include('/api/clientes/'));",
+                  "pm.collectionVariables.set('temporalId', pm.response.json().clienteId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Identificación duplicada (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Temporal\",\n  \"genero\": \"OTRO\",\n  \"edad\": 28,\n  \"identificacion\": \"{{temporalIdentificacion}}\",\n  \"direccion\": \"Quito centro\",\n  \"telefono\": \"0991234567\",\n  \"contrasena\": \"clave1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));",
+                  "pm.test('Título', () => pm.expect(pm.response.json().title).to.eql('Identificación duplicada'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Menor de edad (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Temporal\",\n  \"genero\": \"OTRO\",\n  \"edad\": 17,\n  \"identificacion\": \"MENOR12345\",\n  \"direccion\": \"Quito centro\",\n  \"telefono\": \"0991234567\",\n  \"contrasena\": \"clave1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Error en edad', () => pm.expect(pm.response.json().errores).to.have.property('edad'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar por id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{temporalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{temporalId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('No expone la contraseña', () => pm.expect(pm.response.json()).to.not.have.property('contrasena'));",
+                  "pm.test('Es el cliente creado', () => pm.expect(pm.response.json().clienteId).to.eql(pm.collectionVariables.get('temporalId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar paginado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes?page=0&size=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Estructura de página', () => pm.expect(pm.response.json()).to.include.keys('contenido','pagina','tamano','totalElementos','totalPaginas'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar por identificación",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes?identificacion={{temporalIdentificacion}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ],
+              "query": [
+                {
+                  "key": "identificacion",
+                  "value": "{{temporalIdentificacion}}"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Un único resultado', () => pm.expect(pm.response.json().totalElementos).to.eql(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH solo dirección",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{temporalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{temporalId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"direccion\": \"Amazonas y NNUU\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Dirección actualizada', () => pm.expect(pm.response.json().direccion).to.eql('Amazonas y NNUU'));",
+                  "pm.test('Nombre conservado', () => pm.expect(pm.response.json().nombre).to.eql('Cliente Temporal'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH sin campos (400)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{temporalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{temporalId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT reemplazo completo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{temporalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{temporalId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Temporal Editado\",\n  \"genero\": \"OTRO\",\n  \"edad\": 29,\n  \"identificacion\": \"{{temporalIdentificacion}}\",\n  \"direccion\": \"Av. 6 de Diciembre\",\n  \"telefono\": \"0991234568\",\n  \"estado\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('No expone la contraseña', () => pm.expect(pm.response.json()).to.not.have.property('contrasena'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT con contraseña (400)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{temporalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{temporalId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Temporal Editado\",\n  \"genero\": \"OTRO\",\n  \"edad\": 29,\n  \"identificacion\": \"{{temporalIdentificacion}}\",\n  \"direccion\": \"Av. 6 de Diciembre\",\n  \"telefono\": \"0991234568\",\n  \"estado\": true,\n  \"contrasena\": \"nueva\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Eliminar (204)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{temporalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{temporalId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 204', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar eliminado (404)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/{{temporalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes",
+                "{{temporalId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reutilizar identificación eliminada (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "clientes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Cliente Temporal\",\n  \"genero\": \"OTRO\",\n  \"edad\": 28,\n  \"identificacion\": \"{{temporalIdentificacion}}\",\n  \"direccion\": \"Quito centro\",\n  \"telefono\": \"0991234567\",\n  \"contrasena\": \"clave1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8081/api"
+    },
+    {
+      "key": "joseIdentificacion",
+      "value": ""
+    },
+    {
+      "key": "joseId",
+      "value": ""
+    },
+    {
+      "key": "marianelaIdentificacion",
+      "value": ""
+    },
+    {
+      "key": "marianelaId",
+      "value": ""
+    },
+    {
+      "key": "juanIdentificacion",
+      "value": ""
+    },
+    {
+      "key": "juanId",
+      "value": ""
+    },
+    {
+      "key": "temporalIdentificacion",
+      "value": ""
+    },
+    {
+      "key": "temporalId",
+      "value": ""
+    }
+  ]
+}
