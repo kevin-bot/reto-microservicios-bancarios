@@ -160,13 +160,13 @@ duplicado sin efecto, la eliminación que desactiva cuentas y un JSON inválido 
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T017 [P] [US1] Crear `T/clienteref/service/ClienteEventoProcessorImplTest.java` (Mockito: `ClienteRefRepository`, `EventoProcesadoRepository`, `CuentaRepository`):
+- [X] T017 [P] [US1] Crear `T/clienteref/service/ClienteEventoProcessorImplTest.java` (Mockito: `ClienteRefRepository`, `EventoProcesadoRepository`, `CuentaRepository`):
   - `CLIENTE_CREADO` nuevo: guarda el `ClienteRef` y el `EventoProcesado`.
   - `CLIENTE_ACTUALIZADO` más reciente: aplica el cambio.
   - `eventId` ya procesado: no guarda nada.
   - Evento fuera de orden: no cambia la réplica, pero registra el `eventId`.
   - `CLIENTE_ELIMINADO`: deja el cliente inactivo y llama a `desactivar()` en cada una de sus cuentas.
-- [ ] T018 [P] [US1] Crear `T/clienteref/ClienteEventoListenerIntegrationTest.java` (`@SpringBootTest`, Testcontainers). Publica JSON con `RabbitTemplate` en `clientes.exchange` y espera con Awaitility:
+- [X] T018 [P] [US1] Crear `T/clienteref/ClienteEventoListenerIntegrationTest.java` (`@SpringBootTest`, Testcontainers). Publica JSON con `RabbitTemplate` en `clientes.exchange` y espera con Awaitility:
   - `cliente.creado`: la réplica existe en **menos de 5 s** (SC-003).
   - Mismo mensaje dos veces: una sola fila en `evento_procesado` y la réplica sin cambios.
   - Evento con una `fechaOcurrencia` anterior: se ignora.
@@ -176,16 +176,16 @@ duplicado sin efecto, la eliminación que desactiva cuentas y un JSON inválido 
 
 ### Implementation for User Story 1
 
-- [ ] T019 [P] [US1] Crear `M/clienteref/entity/EventoProcesado.java` (PK `eventId`, `procesadoEn`) y `M/clienteref/repository/EventoProcesadoRepository.java`
-- [ ] T020 [P] [US1] Crear `M/clienteref/event/TipoEventoCliente.java` y el record `M/clienteref/event/ClienteEventoRecibido.java` (`eventId`, `tipo`, `fechaOcurrencia`, `clienteId`, `nombre`, `estado`), según contracts/eventos-consumidos.md
-- [ ] T021 [US1] Crear la interfaz `M/clienteref/service/ClienteEventoProcessor.java` con `procesar(ClienteEventoRecibido)`, y `ClienteEventoProcessorImpl.java` (`@Transactional`), con el flujo de contracts/eventos-consumidos.md (idempotencia, orden, upsert y desactivación de cuentas) y logs INFO en cada descarte
-- [ ] T022 [US1] Crear `M/shared/config/RabbitConfig.java`:
+- [X] T019 [P] [US1] Crear `M/clienteref/entity/EventoProcesado.java` (PK `eventId`, `procesadoEn`) y `M/clienteref/repository/EventoProcesadoRepository.java`
+- [X] T020 [P] [US1] Crear `M/clienteref/event/TipoEventoCliente.java` y el record `M/clienteref/event/ClienteEventoRecibido.java` (`eventId`, `tipo`, `fechaOcurrencia`, `clienteId`, `nombre`, `estado`), según contracts/eventos-consumidos.md
+- [X] T021 [US1] Crear la interfaz `M/clienteref/service/ClienteEventoProcessor.java` con `procesar(ClienteEventoRecibido)`, y `ClienteEventoProcessorImpl.java` (`@Transactional`), con el flujo de contracts/eventos-consumidos.md (idempotencia, orden, upsert y desactivación de cuentas) y logs INFO en cada descarte
+- [X] T022 [US1] Crear `M/shared/config/RabbitConfig.java`:
   - **Exchange**: `clientes.exchange` (topic, durable).
   - **Cola**: `cuentas.clientes.queue` (durable, `x-dead-letter-exchange=cuentas.clientes.dlx`, `x-dead-letter-routing-key=cuentas.clientes.queue`), con binding `cliente.*`.
   - **DLQ**: DLX `cuentas.clientes.dlx` (direct) y cola `cuentas.clientes.dlq` con su binding.
   - **Converter**: `Jackson2JsonMessageConverter` con una copia del `ObjectMapper` con `FAIL_ON_UNKNOWN_PROPERTIES=false` y `setAlwaysConvertToInferredType(true)`.
   - **Política de reintentos**: bean `RabbitRetryTemplateCustomizer` (destino `LISTENER`) con una política que no reintenta `MessageConversionException` (ni una `ListenerExecutionFailedException` causada por ella) y mantiene los 4 intentos para el resto.
-- [ ] T023 [US1] Crear `M/clienteref/event/ClienteEventoListener.java` (`@RabbitListener(queues = "cuentas.clientes.queue")`), que delega en `ClienteEventoProcessor`
+- [X] T023 [US1] Crear `M/clienteref/event/ClienteEventoListener.java` (`@RabbitListener(queues = "cuentas.clientes.queue")`), que delega en `ClienteEventoProcessor`
 
 **Checkpoint**: T017–T018 en verde.
 
